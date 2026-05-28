@@ -1,0 +1,61 @@
+# Python cache / bytecode
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.pyd
+
+# Virtual environments / local envs
+.venv/
+venv/
+env/
+.conda/
+
+# Notebook / IDE / OS noise
+.ipynb_checkpoints/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+screen_log*
+
+# Build / package / experiment artifacts
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Model / tensor checkpoints
+**/ckpt/
+**/ckpt_old/
+**/ckpt_large_beta/
+**/*.pt
+**/*.pth
+**/*.ckpt
+**/*.npy
+**/*.pkl
+
+# Generated outputs
+/synthetic/
+/images/
+/counterfactual_results/
+/counterfactual_results_*/
+/test/
+
+# Large / regenerated data artifacts
+/data/*
+!/data/Info/
+!/data/Info/*.json
+
+# Vendored / external projects
+/DiCE-main/
+# /baselines/CARLA/
+
+# Local model artifacts inside vendored baselines
+baselines/**/sample_trained_models/
+baselines/**/*.pth
+baselines/**/*.pt
+baselines/**/*.pkl
