@@ -390,74 +390,6 @@ def main(args):
         X_test_num.float(), X_cat=X_test_cat, y=y_test, info=info
     )
 
-    # ----------------------------------------------------------------------------
-
-    X_num_cat_ohe, _, categories_ohe, d_numerical_ohe, y_ohe = preprocess(
-        data_dir,
-        task_type=info["task_type"],
-        cat_encoding="one-hot",
-        num_encoding="minmax",
-    )
-    X_num_cat_ohe_drop_bin, _, _, _, y_ohe_drop_bin = preprocess(
-        data_dir,
-        task_type=info["task_type"],
-        cat_encoding="one-hot-drop-bin",
-        num_encoding="minmax",
-    )
-
-    X_train_num_cat_ohe, X_test_num_cat_ohe = X_num_cat_ohe
-
-    y_train_num_cat_ohe, y_test_num_cat_ohe = y_ohe
-
-    X_train_num_cat_ohe_drop_bin, X_test_num_cat_ohe_drop_bin = X_num_cat_ohe_drop_bin
-
-    y_train_num_cat_ohe_drop_bin, y_test_num_cat_ohe_drop_bin = y_ohe_drop_bin
-
-    train_data_clf_ohe = TabularDataset(
-        X_train_num_cat_ohe, y=y_train_num_cat_ohe, info=info
-    )
-
-    train_data_clf_ohe_drop_bin = TabularDataset(
-        X_train_num_cat_ohe_drop_bin, y=y_train_num_cat_ohe_drop_bin, info=info
-    )
-
-    train_loader_clf_ohe = DataLoader(
-        train_data_clf_ohe,
-        batch_size=batch_size,
-        shuffle=True,
-        num_workers=4,
-    )
-
-    train_loader_clf_ohe_drop_bin = DataLoader(
-        train_data_clf_ohe_drop_bin,
-        batch_size=batch_size,
-        shuffle=True,
-        num_workers=4,
-    )
-
-    test_data_clf_ohe = TabularDataset(
-        X_test_num_cat_ohe, y=y_test_num_cat_ohe, info=info
-    )
-
-    test_data_clf_ohe_drop_bin = TabularDataset(
-        X_test_num_cat_ohe_drop_bin, y=y_test_num_cat_ohe_drop_bin, info=info
-    )
-
-    test_loader_clf_ohe = DataLoader(
-        test_data_clf_ohe,
-        batch_size=batch_size,
-        shuffle=True,
-        num_workers=4,
-    )
-
-    test_loader_clf_ohe_drop_bin = DataLoader(
-        test_data_clf_ohe_drop_bin,
-        batch_size=batch_size,
-        shuffle=True,
-        num_workers=4,
-    )
-    # ----------------------------------------------------------------------------
-
     train_data = TabularDataset(
         X_train_num.float(), X_cat=X_train_cat, y=y_train, info=info
     )
@@ -472,32 +404,15 @@ def main(args):
         num_workers=4,
     )
 
-    train_loader_clf = DataLoader(
-        train_data_clf,
-        batch_size=batch_size,
-        shuffle=True,
-        num_workers=4,
-    )
-    test_loader_clf = DataLoader(
-        test_data_clf,
-        batch_size=batch_size,
-        shuffle=True,
-        num_workers=4,
-    )
+    black_box_path = f"{data_dir}/black_box_mlp.pkl"
+    if hidden_dims is not None:
+        black_box_path = f"{data_dir}/black_box_mlp_hidden_{hidden_dims}.pkl"
 
-    train_black_box_clf_original_data(
-        info,
-        train_loader_clf_ohe,
-        test_loader=test_loader_clf_ohe,
-        data_dir=data_dir,
-        num_epochs=args.black_box_epochs,
-        cat_encoding="one-hot",
-        input_shape=X_train_num_cat_ohe.shape[-1],
-        gumbel_softmax=gumbel_softmax,
-        hidden_dims=hidden_dims,
-    )
-
-    # train_black_box_clf_original_data(info, train_loader_clf_ohe_drop_bin, test_loader=test_loader_clf_ohe_drop_bin, data_dir=data_dir, num_epochs=100, cat_encoding='one-hot-drop-bin', input_shape=X_train_num_cat_ohe_drop_bin.shape[-1])
+    if not os.path.isfile(black_box_path):
+        raise FileNotFoundError(
+            f"找不到黑盒分类器: {black_box_path}。请先运行 `--method black_box --mode train/run`。"
+        )
+    print(f"Found black box classifier: {black_box_path}")
 
     model = Model_VAE(
         NUM_LAYERS,

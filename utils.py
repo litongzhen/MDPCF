@@ -38,6 +38,14 @@ def execute_function(method, mode):
         from mdpcf.vae.train_black_box import main as train_black_box
         return train_black_box
 
+    if mode == "run" and method == "black_box":
+        from mdpcf.vae.run_black_box import main as run_black_box
+        return run_black_box
+
+    if mode in ("test", "check") and method == "black_box":
+        from mdpcf.vae.test_black_box import main as test_black_box
+        return test_black_box
+
     if method == "vae":
         mode = "train"
 
