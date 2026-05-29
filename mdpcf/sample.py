@@ -44,9 +44,34 @@ class Decoder_Black_Box(torch.nn.Module):
             input_encoded_categorical_feature_indexes
         )
         self.fixed_w = None
+        self.immutable_mask = None
+        self.immutable_values = None
 
     def set_fixed_w(self, w):
         self.fixed_w = w.detach()
+
+    def set_immutable_reference(self, immutable_mask, immutable_values):
+        if not torch.is_tensor(immutable_mask):
+            immutable_mask = torch.tensor(immutable_mask, dtype=torch.bool)
+        if not torch.is_tensor(immutable_values):
+            immutable_values = torch.tensor(immutable_values, dtype=torch.float32)
+        self.immutable_mask = immutable_mask.detach()
+        self.immutable_values = immutable_values.detach()
+
+    def _apply_immutable_constraints(self, decoded):
+        if self.immutable_mask is None or self.immutable_values is None:
+            return decoded
+        immutable_mask = self.immutable_mask.to(decoded.device)
+        immutable_values = self.immutable_values.to(decoded.device)
+        if immutable_mask.dim() == 1:
+            immutable_mask = immutable_mask.unsqueeze(0)
+        if immutable_values.dim() == 1:
+            immutable_values = immutable_values.unsqueeze(0)
+        if immutable_mask.shape[0] != decoded.shape[0]:
+            immutable_mask = immutable_mask.repeat(decoded.shape[0], 1)
+        if immutable_values.shape[0] != decoded.shape[0]:
+            immutable_values = immutable_values.repeat(decoded.shape[0], 1)
+        return torch.where(immutable_mask, immutable_values, decoded)
 
     def bb_only(self, input_data):
         original_input_dim = input_data.dim()
@@ -88,8 +113,7 @@ class Decoder_Black_Box(torch.nn.Module):
             else:
                 processed_cats.append(cat_pred)
         concatenated = torch.cat((x_hat_num, *processed_cats), dim=-1)
-
-        return concatenated
+        return self._apply_immutable_constraints(concatenated)
 
     def forward(self, input_data):
 
@@ -119,6 +143,7 @@ class Decoder_Black_Box(torch.nn.Module):
             else:
                 processed_cats.append(cat_pred)
         concatenated = torch.cat((x_hat_num, *processed_cats), dim=-1)
+        concatenated = self._apply_immutable_constraints(concatenated)
 
         output = self.black_box_clf(concatenated)
 
@@ -140,6 +165,7 @@ def optimize_z_counterfactuals(
     diversity_weight,
     latent_init_radius,
     original_input_instance,
+    immutable_mask,
     device,
 ):
     latent_dim = z0.shape[-1]
@@ -152,6 +178,7 @@ def optimize_z_counterfactuals(
     for param in decoder_black_box_clf.parameters():
         param.requires_grad_(False)
     decoder_black_box_clf.set_fixed_w(w0)
+    decoder_black_box_clf.set_immutable_reference(immutable_mask, original_input_instance)
     optimizer = torch.optim.Adam([z_candidates], lr=0.05)
     target = torch.ones(total_CFs, dtype=torch.long, device=device)
     original_input_instance = torch.tensor(
@@ -287,6 +314,11 @@ def main(args):
         cat_encoding="one-hot",
         num_encoding="minmax",
     )
+    X_num_raw, X_cat_raw, categories_raw, _, _ = preprocess(
+        data_dir,
+        task_type=info["task_type"],
+        num_encoding="minmax",
+    )
 
     """
         Generating samples    
@@ -317,8 +349,21 @@ def main(args):
     )
     with torch.no_grad():
         test_preds = torch.argmax(loaded_black_box_clf(test_tensor_input), dim=1).cpu().numpy()
+
     input_encoded_continuous_feature_indexes = list(range(X_num_cat_ohe[0].shape[1]))
     input_encoded_categorical_feature_indexes = []
+
+    immutable_cols = set(info.get("immutable", []))
+    immutable_mask_np = np.zeros(X_num_cat_ohe[0].shape[1], dtype=bool)
+    immutable_mask_np[0] = "age" in immutable_cols
+    start = len(info["num_col_idx"])
+    for local_idx, cat_col_idx in enumerate(info["cat_col_idx"]):
+        col_name = info["idx_name_mapping"][str(cat_col_idx)]
+        cat_info = categories_raw[local_idx]
+        cat_width = int(cat_info) if isinstance(cat_info, (int, np.integer)) else len(cat_info)
+        if col_name in immutable_cols:
+            immutable_mask_np[start : start + cat_width] = True
+        start += cat_width
 
     decoder_black_box_clf = Decoder_Black_Box(
         loaded_black_box_clf,
@@ -343,6 +388,7 @@ def main(args):
     negative_test_w_df = test_w_df.iloc[indices_negative_class].reset_index(drop=True)
 
     negative_test_encoded = X_num_cat_ohe[1][indices_negative_class]
+    immutable_ref_np = negative_test_encoded.copy()
 
     print(
         {
@@ -383,7 +429,8 @@ def main(args):
             max(proximity_weight_input, 0.0),
             diversity_weight,
             latent_init_radius,
-            negative_test_encoded[indx : indx + 1],
+            immutable_ref_np[indx : indx + 1],
+            torch.tensor(immutable_mask_np, dtype=torch.bool, device=device),
             device,
         )
         if z_valid is None:
@@ -397,6 +444,9 @@ def main(args):
         idx_name_mapping = info["idx_name_mapping"]
         idx_name_mapping = {int(key): value for key, value in idx_name_mapping.items()}
         cfs.rename(columns=idx_name_mapping, inplace=True)
+        for immutable_col in info.get("immutable", []):
+            if immutable_col in cfs.columns:
+                cfs[immutable_col] = negative_test_df.loc[indx, immutable_col]
         with torch.no_grad():
             probs = torch.softmax(
                 decoder_black_box_clf.bb_only(decoded_valid.to(device)),
