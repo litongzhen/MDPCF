@@ -6,8 +6,8 @@ import numpy as np
 import torch
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, roc_auc_score
 
-from mdpcf.vae.model import BBMLPCLF
-from utils_train import preprocess, get_name_form_args
+from mdpcf.csvae.model import BBMLPCLF
+from utils_train import preprocess, get_black_box_model_path
 
 
 def main(args):
@@ -32,11 +32,7 @@ def main(args):
     class_mapping = {info["target_class"]: 1, info["negative_class"]: 0}
     y_test = np.array([class_mapping[row[0]] for row in y_test_raw])
 
-    model_filename = f"{data_dir}/black_box_mlp.pkl"
-    if not gumbel_softmax:
-        model_filename = f"{data_dir}/black_box_mlp_no_gumbel_softmax.pkl"
-    if hidden_dims is not None:
-        model_filename = f"{data_dir}/black_box_mlp_hidden_{hidden_dims}.pkl"
+    model_filename = get_black_box_model_path(args, data_dir)
 
     if not os.path.isfile(model_filename):
         raise FileNotFoundError(

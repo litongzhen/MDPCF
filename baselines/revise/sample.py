@@ -14,7 +14,7 @@ import sys
 
 from utils_train import preprocess, TabularDataset, get_name_form_args
 
-from mdpcf.vae.model import BBMLPCLF
+from mdpcf.csvae.model import BBMLPCLF
 from mdpcf.latent_utils import get_input_generate, recover_data, split_num_cat_target
 import numpy as np
 import pandas as pd
@@ -131,7 +131,11 @@ def main(args):
     save_path = args.save_path
     hidden_dims = args.hidden_dims
 
-    _, _, _, _, _, _, info, num_inverse, cat_inverse, y = get_input_generate(args)
+    generation_inputs = get_input_generate(args)
+    info = generation_inputs["info"]
+    num_inverse = generation_inputs["num_inverse"]
+    cat_inverse = generation_inputs["cat_inverse"]
+    y = generation_inputs["y"]
 
     num_cols = [info["column_names"][x] for x in info["num_col_idx"]]
     cat_cols = [info["column_names"][x] for x in info["cat_col_idx"]]

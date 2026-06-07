@@ -1,4 +1,5 @@
 import numpy as np
+import json
 import os
 import torch
 import src
@@ -6,47 +7,65 @@ from torch.utils.data import Dataset
 
 def get_name_form_args(args):
     """
-    根据训练参数生成模型文件名，用于保存和加载模型
+    根据训练参数生成较短的模型文件名，用于保存和加载模型
 
     参数:
         args: 命令行参数对象，包含所有训练配置
 
     返回:
-        str: 由参数拼接而成的文件名字符串
+        str: 由核心参数拼接而成的短文件名字符串
 
     示例输出:
-        "num_encoding[min_max]_num_loss[mse]_csvae_kl_weight[0.1]_cont_actv[sigmoid]_reparam"
+        "num[minmax]_loss[L2]_csvae_gs[t1.0]_cont[sigmoid]"
     """
-    opts_vae = []
-    # 添加数值编码方式
-    opts_vae.append(f"num_encoding[{args.num_encoding}]")
-    # 添加重建损失类型
-    opts_vae.append(f"num_loss[{args.num_reconstr_loss}]")
-    # 添加模型类型标识
-    opts_vae.append("csvae")
+    short_num_encoding = args.num_encoding.replace("_torch", "").replace(
+        "min_max", "minmax"
+    )
+    opts_csvae = [
+        f"num[{short_num_encoding}]",
+        f"loss[{args.num_reconstr_loss}]",
+        "csvae",
+    ]
 
-    # 如果KL散度权重大于0，添加到文件名中
     if args.kl_weight > 0:
-        opts_vae.append(f"kl_weight[{args.kl_weight}]")
+        opts_csvae.append(f"kl[{args.kl_weight}]")
 
-    # 如果使用Gumbel-Softmax采样（用于离散变量），添加温度参数
     if args.gumbel_softmax:
-        opts_vae.append(f"cat_actv[gumbel_softmax, tau={args.tau}]")
+        opts_csvae.append(f"gs[t{args.tau}]")
 
-    # 添加连续变量的激活函数类型
-    if args.sigmoid:
-        opts_vae.append("cont_actv[sigmoid]")
-    else:
-        opts_vae.append("cont_actv[linear]")
+    opts_csvae.append("cont[sigmoid]" if args.sigmoid else "cont[linear]")
 
-    # 如果使用重参数化技巧（CSVAE训练的关键技术）
-    if args.reparam:
-        opts_vae.append("reparam")
+    return "_".join(opts_csvae)
 
-    # 用下划线连接所有参数，形成文件名
-    output_file_name_vae = "_".join(opts_vae)
 
-    return output_file_name_vae
+def save_run_config(args, output_dir, filename="config.json"):
+    """
+    将运行参数落盘，方便复现实验。
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    config_path = os.path.join(output_dir, filename)
+    with open(config_path, "w", encoding="utf-8") as f:
+        json.dump(vars(args), f, indent=2, ensure_ascii=False, sort_keys=True)
+    return config_path
+
+
+def get_black_box_model_path(
+    args=None, data_dir="", cat_encoding=None, hidden_dims=None, gumbel_softmax=None
+):
+    """
+    统一黑盒分类器文件名。
+    """
+    if args is not None:
+        hidden_dims = getattr(args, "hidden_dims", hidden_dims)
+        gumbel_softmax = getattr(args, "gumbel_softmax", gumbel_softmax)
+
+    if hidden_dims is not None:
+        return os.path.join(data_dir, f"black_box_mlp_hidden_{hidden_dims}.pkl")
+    if cat_encoding == "one-hot-drop-bin":
+        return os.path.join(data_dir, "black_box_mlp_ohe_drop_bin.pkl")
+    if gumbel_softmax is False:
+        return os.path.join(data_dir, "black_box_mlp_no_gumbel_softmax.pkl")
+    return os.path.join(data_dir, "black_box_mlp.pkl")
 
 def get_optim_params_form_args(args):
     """
@@ -258,7 +277,6 @@ def preprocess(dataset_path, task_type='binclass', inverse=False, cat_encoding=N
     dataset = make_dataset(
         data_path=dataset_path,
         T=T,
-        task_type=task_type,
         change_val=False,  # 是否从训练集中划分验证集
     )
 
@@ -332,43 +350,9 @@ def preprocess(dataset_path, task_type='binclass', inverse=False, cat_encoding=N
         return dataset
 
 
-def update_ema(target_params, source_params, rate=0.999):
-    """
-    使用指数移动平均(EMA)更新目标网络参数
-
-    EMA公式: target = rate * target + (1 - rate) * source
-
-    应用场景:
-        - 知识蒸馏: 教师网络参数更新
-        - 模型平均: 提高模型泛化能力，减少过拟合
-        - 目标网络更新: 强化学习中的稳定训练（如DDPG、SAC）
-
-    参数:
-        target_params: 目标网络参数序列（通常是教师网络或历史模型）
-        source_params: 源网络参数序列（通常是学生网络或当前模型）
-        rate (float): EMA衰减率，范围[0, 1]
-            - 接近1: 更新缓慢，更依赖历史参数，训练更稳定
-            - 接近0: 更新快速，更依赖当前参数，适应性更强
-            - 默认0.999: 缓慢更新，适合大多数场景
-
-    示例:
-        # 在训练循环中使用
-        for epoch in range(num_epochs):
-            train(model)
-            # 每个epoch结束后更新目标网络
-            update_ema(target_model.parameters(), model.parameters(), rate=0.999)
-    """
-    for target, source in zip(target_params, source_params):
-        # detach(): 分离梯度，EMA更新不参与反向传播
-        # mul_(rate): 原地乘法，target *= rate
-        # add_(source, alpha=1-rate): 原地加法，target += (1-rate) * source
-        target.detach().mul_(rate).add_(source.detach(), alpha=1 - rate)
-
-
 def make_dataset(
     data_path: str,
     T: src.Transformations,
-    task_type,
     change_val: bool,
 ):
     """
@@ -397,7 +381,6 @@ def make_dataset(
     参数:
         data_path (str): 数据集目录路径
         T (src.Transformations): 数据转换器对象，包含归一化、编码等配置
-        task_type (str): 任务类型，用于创建Dataset对象
         change_val (bool): 是否从训练集中划分验证集
 
     返回:
@@ -444,16 +427,6 @@ def make_dataset(
     # ==================== 可选：划分验证集 ====================
     if change_val:
         D = src.change_val(D)
-
-    # 注释掉的代码: 将分类标签转换为索引（备用方案）
-    # def categorical_to_idx(feature):
-    #     unique_categories = np.unique(feature)
-    #     idx_mapping = {category: index for index, category in enumerate(unique_categories)}
-    #     idx_feature = np.array([idx_mapping[category] for category in feature])
-    #     return idx_feature
-    #
-    # for split in ['train', 'val', 'test']:
-    #     D.y[split] = categorical_to_idx(D.y[split].squeeze(1))
 
     # ==================== 应用数据转换并返回 ====================
     # 转换包括: 归一化、缺失值填充、分类变量编码等

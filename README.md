@@ -32,10 +32,10 @@ cd baselines/CARLA
 pip install -e .
 ```
 
-Train VAE model
+Train CSVAE model
 
 ```
-python main.py --dataname [NAME_OF_DATASET] --method vae --mode train
+python main.py --dataname [NAME_OF_DATASET] --method csvae --mode train
 ```
 
 ## Usage
@@ -76,6 +76,6 @@ python main.py --dataname [NAME_OF_DATASET] --method wachter --mode evaluate --n
 
 In our code we use and alter versions of the following repositories.
 
-- [TABSYN](https://github.com/amazon-science/tabsyn) (VAE structure)
+- [TABSYN](https://github.com/amazon-science/tabsyn) (CSVAE structure)
 - [DiCE](https://github.com/interpretml/DiCE) (under `/baselines/dice/DiCE-main`), SGD optimization for counterfactual generation.
 - [CARLA](https://github.com/carla-recourse/CARLA) (under `/baselines`), the CARLA framework is used for evaluation against baseline methods.

@@ -1,121 +1,24 @@
-import numpy as np
 import torch
 import torch.nn as nn
 
 from torch.utils.data import DataLoader
-from torch.optim.lr_scheduler import ReduceLROnPlateau
 import argparse
 import warnings
 
 import os
 from tqdm import tqdm
 import json
-import time
-import pandas as pd
 
-from mdpcf.vae.model import (
-    Model_VAE,
-    Encoder_model,
-    Decoder_model,
-    BBMLPCLF,
-)  # , Encoder_model_Z
+from mdpcf.csvae.model import BBMLPCLF
 
-from utils_train import preprocess, TabularDataset, get_name_form_args
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score
-import joblib
-
+from utils_train import (
+    preprocess,
+    TabularDataset,
+    get_black_box_model_path,
+    save_run_config,
+)
 warnings.filterwarnings("ignore")
-from sklearn.pipeline import Pipeline
-from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
 import torch.optim as optim
-
-LR = 1e-3
-WD = 0
-D_TOKEN = 4
-TOKEN_BIAS = True
-
-N_HEAD = 1
-FACTOR = 32
-NUM_LAYERS = 2
-
-
-def compute_loss(
-    X_num,
-    X_cat,
-    Recon_X_num,
-    Recon_X_cat,
-    mu_z,
-    logvar_z,
-    gumbel_softmax=False,
-    num_reconstr_loss="L2",
-):
-
-    if num_reconstr_loss == "L2":
-        num_loss = (X_num - Recon_X_num).pow(2).mean()
-    else:
-        num_loss = (X_num - Recon_X_num).abs().mean()
-
-    cat_loss = 0
-    acc = 0
-    total_num = 0
-
-    if gumbel_softmax:
-
-        cat_loss_fn = nn.L1Loss()
-
-        # cat_loss_fn = nn.CrossEntropyLoss()
-        # cat_loss_fn = nn.NLLLoss()
-
-        for idx, x_cat in enumerate(Recon_X_cat):
-            if x_cat is not None:
-                # log_x_cat = torch.log(x_cat + 1e-9)
-                # cat_loss += cat_loss_fn(log_x_cat, X_cat[:, idx])
-                # x_hat = log_x_cat
-                # print(x_cat[0])
-                # print(X_cat[0, idx])
-                # exit(1)
-                x_cat_ohe = torch.nn.functional.one_hot(
-                    X_cat[:, idx], num_classes=x_cat.shape[-1]
-                ).float()
-                cat_loss += cat_loss_fn(x_cat, x_cat_ohe)
-                # cat_loss += cat_loss_fn(x_cat, X_cat[:, idx])
-                x_hat = x_cat
-
-                x_hat_for_acc = x_hat.argmax(dim=-1)
-            acc += (x_hat_for_acc == X_cat[:, idx]).float().sum()
-            total_num += x_hat_for_acc.shape[0]
-        cat_loss /= idx + 1
-        acc /= total_num
-    else:
-        cat_loss_fn = nn.CrossEntropyLoss()
-
-        for idx, x_cat in enumerate(Recon_X_cat):
-            if x_cat is not None:
-                cat_loss += cat_loss_fn(x_cat, X_cat[:, idx])
-
-                x_hat = x_cat.argmax(dim=-1)
-            acc += (x_hat == X_cat[:, idx]).float().sum()
-            total_num += x_hat.shape[0]
-        cat_loss /= idx + 1
-        acc /= total_num
-    # loss = num_loss + cat_loss
-
-    temp = 1 + logvar_z - mu_z.pow(2) - logvar_z.exp()
-
-    loss_kld = -0.5 * torch.mean(temp.mean(-1).mean())
-    return num_loss, cat_loss, loss_kld, acc
-
-
-def concatenate_input_dims(x, tensor=False):
-    shape = x.shape
-    new_shape = shape[:-2] + (shape[-2] * shape[-1],)
-    reshaped_x = x.reshape(new_shape)
-
-    if tensor:
-        return torch.tensor(reshaped_x)
-    return reshaped_x
 
 
 def train_black_box_clf_original_data(
@@ -128,17 +31,16 @@ def train_black_box_clf_original_data(
     input_shape=None,
     gumbel_softmax=True,
     hidden_dims=None,
+    model_filename=None,
 ):
 
-    model_filename = f"{data_dir}/black_box_mlp.pkl"
-    if cat_encoding == "one-hot-drop-bin":
-        model_filename = f"{data_dir}/black_box_mlp_ohe_drop_bin.pkl"
-
-    if not gumbel_softmax:
-        model_filename = f"{data_dir}/black_box_mlp_no_gumbel_softmax.pkl"
-
-    if hidden_dims is not None:
-        model_filename = f"{data_dir}/black_box_mlp_hidden_{hidden_dims}.pkl"
+    if model_filename is None:
+        model_filename = get_black_box_model_path(
+            data_dir=data_dir,
+            cat_encoding=cat_encoding,
+            hidden_dims=hidden_dims,
+            gumbel_softmax=gumbel_softmax,
+        )
 
     if os.path.isfile(model_filename):
         print("\tBlack box CLF on original data is already trained")
@@ -158,12 +60,6 @@ def train_black_box_clf_original_data(
         print("Given input shape is", input_shape)
     else:
         input_shape = input_shape_original
-
-    # class_mapping = {info["target_class"]: 1, info["negative_class"]: 0}
-
-    # y_n = np.array([class_mapping[class_name[0]] for class_name in y_train])
-
-    # y_train_t = torch.tensor(y_n)
 
     clf = BBMLPCLF(input_shape)
 
@@ -209,55 +105,6 @@ def train_black_box_clf_original_data(
     torch.save(clf.state_dict(), model_filename)
 
 
-def train_black_box_clf_latent(X, y, info, X_test=None, y_test=None, ckpt_dir=""):
-
-    X = X[:, 1:, :]
-    X = concatenate_input_dims(X, tensor=True)
-
-    class_mapping = {info["target_class"]: 1, info["negative_class"]: 0}
-
-    y_n = np.array([class_mapping[class_name[0]] for class_name in y])
-
-    y = torch.tensor(y_n)
-
-    clf = BBMLPCLF(X.shape[-1])
-    criterion = nn.CrossEntropyLoss()  # Use Cross Entropy Loss for classification
-    optimizer = optim.Adam(clf.parameters(), lr=0.001)
-
-    # Training loop
-    epochs = 100
-    for epoch in range(epochs):
-        optimizer.zero_grad()  # Zero the gradients
-        outputs = clf(X)  # Forward pass
-        loss = criterion(outputs, y)  # Compute loss
-        loss.backward()  # Backward pass
-        optimizer.step()  # Optimize
-
-    model_filename = f"{ckpt_dir}/black_box_latent.pt"
-
-    torch.save(clf.state_dict(), model_filename)
-
-    if X_test is not None:
-
-        X_test = X_test[:, 1:, :]
-        X_test = concatenate_input_dims(X_test, tensor=True)
-
-        y_test_n = np.array([class_mapping[class_name[0]] for class_name in y_test])
-
-        # Put the model in evaluation mode
-        clf.eval()
-
-        # Pass the test dataset through the clf to get predictions
-        with torch.no_grad():
-            test_outputs = clf(X_test)
-
-        _, y_pred = torch.max(test_outputs, 1)
-
-        acc = accuracy_score(y_test_n, y_pred)
-
-        print(f"\tInfo: Black box MLP clf (latent) accuracy on test set: {acc:.4f}")
-
-
 def main(args):
 
     dataname = args.dataname
@@ -269,16 +116,6 @@ def main(args):
     num_encoding = args.num_encoding
 
     gumbel_softmax = args.gumbel_softmax
-
-    output_file_name_vae = get_name_form_args(args)
-
-    curr_dir = os.path.dirname(os.path.abspath(__file__))
-    ckpt_dir = f"{curr_dir}/ckpt/{dataname}/{output_file_name_vae}"
-    if not os.path.exists(ckpt_dir):
-        os.makedirs(ckpt_dir)
-    else:
-        print("VAE for setting", output_file_name_vae, "already exists")
-        # exit(0)
 
     device = args.device
     batch_size = 4096
@@ -341,6 +178,13 @@ def main(args):
     X_test_num = X_test_num.float().to(device)
     X_test_cat = X_test_cat.to(device)
 
+    model_filename = get_black_box_model_path(args, data_dir, cat_encoding="one-hot")
+    save_run_config(
+        args,
+        data_dir,
+        filename=f"{os.path.splitext(os.path.basename(model_filename))[0]}_config.json",
+    )
+
     train_black_box_clf_original_data(
         info,
         train_loader_clf_ohe,
@@ -351,6 +195,7 @@ def main(args):
         input_shape=X_train_num_cat_ohe.shape[-1],
         gumbel_softmax=gumbel_softmax,
         hidden_dims=hidden_dims,
+        model_filename=model_filename,
     )
 
 

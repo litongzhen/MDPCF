@@ -14,7 +14,7 @@ cmap_color = sns.light_palette("seagreen", as_cmap=True)
 proximity_weight_inputs = [0.0, 0.25, 0.5, 0.75, 1.0]
 proximity_weight_latents = [0.0, 0.25, 0.5, 0.75, 1.0]
 combinations = list(itertools.product(proximity_weight_inputs, proximity_weight_latents))
-output_folder_name = f'counterfactual_results/{dataname}/DiCE_latent/num_encoding[min_max_torch]_num_loss[L2]_cat_actv[gumbel_softmax, tau=1.0]_cont_actv[sigmoid]_reparam/gradient'
+output_folder_name = f'counterfactual_results/{dataname}/DiCE_latent/num_encoding[min_max_torch]_num_loss[L2]_cat_actv[gumbel_softmax, tau=1.0]_cont_actv[sigmoid]/gradient'
 
 # Initialize dictionaries to store results
 sparsity_dict = {(i, l): np.nan for i, l in combinations}

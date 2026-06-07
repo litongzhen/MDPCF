@@ -4,7 +4,10 @@ import os
 import pandas as pd
 import numpy as np
 import json
-from utils_train import get_name_form_args, get_optim_params_form_args
+from utils_train import (
+    get_name_form_args,
+    get_optim_params_form_args,
+)
 from tabulate import tabulate
 from sklearn.preprocessing import StandardScaler
 
@@ -255,17 +258,19 @@ def main(args):
     if method == "dice":
         output_folder_name = f"{dataname}/DiCE/{dice_method}/{optimization_parameters}"
     elif method == "mdpcf":
-        output_file_name_vae = get_name_form_args(args)
-        output_folder_name = f"{dataname}/MDPCF/{output_file_name_vae}/{dice_method}/{optimization_parameters}/"
+        output_file_name_csvae = get_name_form_args(args)
+        output_folder_name = f"{dataname}/MDPCF/{output_file_name_csvae}/{dice_method}/{optimization_parameters}"
     elif method == "revise":
-        output_folder_name = f"{dataname}/Revise/"
+        output_folder_name = f"{dataname}/Revise"
     elif method == "cchvae":
-        output_folder_name = f"{dataname}/CCHVAE/"
+        output_folder_name = f"{dataname}/CCHVAE"
     elif method == "wachter":
-        output_folder_name = f"{dataname}/Wachter/"
+        output_folder_name = f"{dataname}/Wachter"
 
     if num_samples > 0:
         output_folder_name = f"{output_folder_name}/{num_samples}_samples"
+    else:
+        output_folder_name = f"{output_folder_name}/all_samples"
 
     if total_CFs > 1:
         output_folder_name = f"{output_folder_name}_CFs_{total_CFs}"

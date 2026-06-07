@@ -2,7 +2,7 @@
 
 ## 这个项目现在做了什么
 
-这个仓库的主线已经从原来的 VAE 改成了 CSVAE。
+这个仓库的主线是 CSVAE。
 
 当前 MDPCF 主流程是：
 
@@ -29,11 +29,11 @@ baseline 还保留着，不改它们的逻辑。
 
 ### `mdpcf/`
 
-- `mdpcf/vae/model.py`：CSVAE、编码器、解码器、黑盒分类器
-- `mdpcf/vae/main.py`：检查黑盒分类器是否存在，并训练 CSVAE
-- `mdpcf/vae/train_black_box.py`：单独训练黑盒分类器
-- `mdpcf/vae/test_black_box.py`：测试已训练的黑盒分类器
-- `mdpcf/vae/run_black_box.py`：黑盒分类器训练/检查后立即测试
+- `mdpcf/csvae/model.py`：CSVAE、编码器、解码器、黑盒分类器
+- `mdpcf/csvae/main.py`：检查黑盒分类器是否存在，并训练 CSVAE
+- `mdpcf/csvae/train_black_box.py`：单独训练黑盒分类器
+- `mdpcf/csvae/test_black_box.py`：测试已训练的黑盒分类器
+- `mdpcf/csvae/run_black_box.py`：黑盒分类器训练/检查后立即测试
 - `mdpcf/latent_utils.py`：潜变量加载、解码、等角方向生成
 - `mdpcf/sample.py`：MDPCF 反事实生成主流程
 
@@ -56,10 +56,6 @@ baseline 还保留着，不改它们的逻辑。
 - 类别列 / 数值列
 - 正负类名称
 - 编码和逆编码信息
-
-### `CSVAE/`
-
-一套独立的 CSVAE 参考实现/实验代码。
 
 ### `counterfactual_results*/`
 
@@ -89,7 +85,7 @@ python process_dataset.py
 训练 CSVAE：
 
 ```bash
-python main.py --dataname adult --method vae --mode train --gpu 0
+python main.py --dataname adult --method csvae --mode train --gpu 0
 ```
 
 这一步现在只会检查黑盒分类器是否已经存在，不会重新训练黑盒。
@@ -102,7 +98,7 @@ python main.py --dataname adult --method black_box --mode run --gpu 0 --hidden_d
 
 常用参数：
 
-- `--vae_epochs`：CSVAE 训练轮数
+- `--csvae_epochs`：CSVAE 训练轮数
 - `--black_box_epochs`：黑盒分类器训练轮数
 - `--gpu -1`：强制 CPU
 - `--gpu 0`：用第 0 张 GPU
@@ -148,7 +144,7 @@ python main.py --dataname adult --method mdpcf --mode evaluate --num_samples 2 -
 
 ### 1. CSVAE 替换
 
-`mdpcf/vae/model.py` 里现在主链路是 CSVAE。
+`mdpcf/csvae/model.py` 里现在主链路是 CSVAE。
 
 - `z`：和 label 相关的潜变量
 - `w`：保留样本其他因素
@@ -188,7 +184,7 @@ counterfactual_results/<dataname>/...
 ```bash
 python download_dataset.py
 python process_dataset.py
-python main.py --dataname adult --method vae --mode train --gpu 0
+python main.py --dataname adult --method csvae --mode train --gpu 0
 python main.py --dataname adult --method mdpcf --mode sample --gpu 0 --num_samples 2 --total_CFs 4
 python main.py --dataname adult --method mdpcf --mode evaluate --gpu 0 --num_samples 2 --total_CFs 4
 ```

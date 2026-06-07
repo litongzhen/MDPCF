@@ -1,20 +1,6 @@
-# from baselines.great.main import main as train_great
-# from baselines.goggle.main import main as train_goggle
-# from baselines.codi.main import main as train_codi
-# from baselines.stasy.main import main as train_stasy
-# from baselines.tabddpm.main_train import main as train_tabddpm
-# from baselines.smote.main import main as train_smote
-
-# from baselines.great.sample import main as sample_great
-# from baselines.goggle.sample import main as sample_goggle
-# from baselines.codi.sample import main as sample_codi
-# from baselines.stasy.sample import main as sample_stasy
-# from baselines.tabddpm.main_sample import main as sample_tabddpm
-
-
-# from mdpcf.main import main as train_mdpcf
 import argparse
 import importlib
+import torch
 
 
 def str2bool(v):
@@ -28,397 +14,374 @@ def str2bool(v):
         raise argparse.ArgumentTypeError("Boolean value expected.")
 
 
+METHOD_DISPATCH = {
+    "csvae": {
+        "default_mode": "train",
+        "modes": {
+            "train": "mdpcf.csvae.main",
+        },
+    },
+    "black_box": {
+        "default_mode": "train",
+        "modes": {
+            "train": "mdpcf.csvae.train_black_box",
+            "run": "mdpcf.csvae.run_black_box",
+            "test": "mdpcf.csvae.test_black_box",
+            "check": "mdpcf.csvae.test_black_box",
+        },
+    },
+    "evaluate": {
+        "default_mode": "run",
+        "modes": {
+            "run": "evaluation_framework.evaluate",
+            "test": "evaluation_framework.evaluate",
+        },
+    },
+    "mdpcf": {
+        "default_mode": "sample",
+        "modes": {
+            "sample": "mdpcf.sample",
+        },
+    },
+    "dice": {
+        "default_mode": "sample",
+        "modes": {
+            "sample": "baselines.dice.sample",
+        },
+    },
+    "revise": {
+        "default_mode": "sample",
+        "modes": {
+            "sample": "baselines.revise.sample",
+        },
+    },
+    "cchvae": {
+        "default_mode": "sample",
+        "modes": {
+            "sample": "baselines.cchvae.sample",
+        },
+    },
+    "wachter": {
+        "default_mode": "sample",
+        "modes": {
+            "sample": "baselines.wachter.sample",
+        },
+    },
+}
+
+
+def resolve_mode(method, mode):
+    """Resolve the effective mode for a method, using its configured default."""
+    method_config = METHOD_DISPATCH.get(method)
+    if method_config is None:
+        available_methods = ", ".join(sorted(METHOD_DISPATCH))
+        raise ValueError(
+            f"Unknown method '{method}'. Available methods: {available_methods}"
+        )
+
+    return mode or method_config["default_mode"]
+
+
+def prepare_runtime_args(args):
+    """Populate runtime-only fields derived from CLI arguments and environment."""
+    args.mode = resolve_mode(args.method, args.mode)
+    if args.gpu != -1 and torch.cuda.is_available():
+        args.device = f"cuda:{args.gpu}"
+    else:
+        args.device = "cpu"
+    return args
+
+
 def execute_function(method, mode):
-    # Lazy imports avoid importing unrelated modules at startup
-    if mode == "train" and method == "vae":
-        from mdpcf.vae.main import main as train_vae
-        return train_vae
+    """Lazy-import and return the entry-point `main` for a given method/mode."""
+    resolved_mode = resolve_mode(method, mode)
+    module_path = METHOD_DISPATCH[method]["modes"].get(resolved_mode)
+    if module_path is None:
+        available_modes = ", ".join(sorted(METHOD_DISPATCH[method]["modes"]))
+        raise ValueError(
+            f"Unknown mode '{resolved_mode}' for method '{method}'. "
+            f"Available modes: {available_modes}"
+        )
 
-    if mode == "train" and method == "black_box":
-        from mdpcf.vae.train_black_box import main as train_black_box
-        return train_black_box
-
-    if mode == "run" and method == "black_box":
-        from mdpcf.vae.run_black_box import main as run_black_box
-        return run_black_box
-
-    if mode in ("test", "check") and method == "black_box":
-        from mdpcf.vae.test_black_box import main as test_black_box
-        return test_black_box
-
-    if method == "vae":
-        mode = "train"
-
-    if mode == "evaluate":
-        from evaluation_framework.evaluate import main as evaluate
-
-        return evaluate
-
-    if method == "mdpcf":
-        from mdpcf.sample import main as sample_mdpcf
-
-        return sample_mdpcf
-    if method == "dice":
-        from baselines.dice.sample import main as sample_dice
-
-        return sample_dice
-    if method == "revise":
-        from baselines.revise.sample import main as sample_revise
-
-        return sample_revise
-    if method == "cchvae":
-        from baselines.cchvae.sample import main as sample_cchvae
-
-        return sample_cchvae
-    if method == "wachter":
-        from baselines.wachter.sample import main as sample_wachter
-
-        return sample_wachter
-
-    raise ValueError(f"Unknown method/mode combination: method={method}, mode={mode}")
+    module = importlib.import_module(module_path)
+    return module.main
 
 
 def get_args():
-    parser = argparse.ArgumentParser(description="Pipeline")
+    parser = argparse.ArgumentParser(
+        description="MDPCF / CSVAE counterfactual generation pipeline"
+    )
 
-    # General configs
-    parser.add_argument(
-        "--dataname", type=str, default="adult", help="Name of dataset."
-    )
-    parser.add_argument(
-        "--mode", type=str, default="train", help="Mode: train or sample."
-    )
-    parser.add_argument(
-        "--method", type=str, default="mdpcf", help="Method: mdpcf or baseline."
-    )
-    parser.add_argument("--gpu", type=int, default=0, help="GPU index.")
-    parser.add_argument("--verbose", type=str2bool, default=False, help="Verbose")
+    general_group = parser.add_argument_group("General")
+    black_box_group = parser.add_argument_group("Black-box classifier")
+    csvae_group = parser.add_argument_group("CSVAE training")
+    sample_group = parser.add_argument_group("Counterfactual sampling")
+    gmm_group = parser.add_argument_group("GMM plausibility")
+    dice_group = parser.add_argument_group("DiCE")
+    evaluate_group = parser.add_argument_group("Evaluation")
 
-    # configs for traing mdpcf's VAE
-    parser.add_argument("--max_beta", type=float, default=1e-2, help="Maximum beta")
-    parser.add_argument("--min_beta", type=float, default=1e-5, help="Minimum beta.")
-    parser.add_argument("--lambd", type=float, default=0.7, help="Batch size.")
-    parser.add_argument(
-        "--gumbel_softmax",
-        type=str2bool,
-        default=True,
-        help="Gumbel softmax output (differentiable)?",
+    general_group.add_argument(
+        "--dataname", type=str, default="adult", help="Dataset name."
     )
-    parser.add_argument("--tau", type=float, default=1.0, help="Tau param")
-    parser.add_argument(
-        "--sigmoid",
-        type=str2bool,
-        default=True,
-        help="Sigmoid the continuous during decoding",
-    )
-    parser.add_argument(
-        "--num_reconstr_loss",
+    general_group.add_argument(
+        "--mode",
         type=str,
-        default="L2",
-        help="Reconstructions loss for continuous part",
+        default=None,
+        help="Mode for the selected method; defaults depend on method.",
     )
-    parser.add_argument(
-        "--reparam", type=str2bool, default=True, help="Use mean + std latents"
+    general_group.add_argument(
+        "--method",
+        type=str,
+        default="mdpcf",
+        help="Method to run: mdpcf, csvae, black_box, evaluate, or a baseline.",
+    )
+    general_group.add_argument(
+        "--gpu", type=int, default=0, help="GPU index; use -1 to force CPU."
+    )
+    general_group.add_argument(
+        "--verbose", type=str2bool, default=False, help="Enable verbose logging."
+    )
+    general_group.add_argument(
+        "--seed", type=int, default=42, help="Seed for numpy and torch."
     )
 
-    parser.add_argument(
-        "--kl_weight", type=float, default=-1, help="KL Weight increasing beta"
-    )
-
-    parser.add_argument(
-        "--hidden_dims", type=int, default=16, help="Hidden dims of black-box model"
-    )
-    parser.add_argument(
-        "--vae_epochs",
+    black_box_group.add_argument(
+        "--hidden_dims",
         type=int,
-        default=4000,
-        help="Number of CSVAE training epochs",
+        default=16,
+        help="Hidden dimension size of the black-box MLP.",
     )
-    parser.add_argument(
+    black_box_group.add_argument(
         "--black_box_epochs",
         type=int,
         default=100,
-        help="Number of black-box classifier training epochs",
+        help="Number of black-box classifier training epochs.",
     )
 
-    parser.add_argument(
-        "--plot_gradients", type=str2bool, default=False, help="For plots optimization"
+    csvae_group.add_argument(
+        "--max_beta", type=float, default=1e-2, help="Maximum KL beta."
+    )
+    csvae_group.add_argument(
+        "--min_beta", type=float, default=1e-5, help="Minimum KL beta."
+    )
+    csvae_group.add_argument(
+        "--lambd", type=float, default=0.7, help="Weight of the supervised label term."
+    )
+    csvae_group.add_argument(
+        "--gumbel_softmax",
+        type=str2bool,
+        default=True,
+        help="Use differentiable Gumbel-Softmax for categorical decoding.",
+    )
+    csvae_group.add_argument(
+        "--tau", type=float, default=1.0, help="Temperature for Gumbel-Softmax."
+    )
+    csvae_group.add_argument(
+        "--sigmoid",
+        type=str2bool,
+        default=True,
+        help="Apply sigmoid to continuous outputs during decoding.",
+    )
+    csvae_group.add_argument(
+        "--num_reconstr_loss",
+        type=str,
+        default="L2",
+        help="Reconstruction loss for continuous features.",
+    )
+    csvae_group.add_argument(
+        "--kl_weight",
+        type=float,
+        default=-1,
+        help="Override KL weight; negative keeps the scheduled beta.",
+    )
+    csvae_group.add_argument(
+        "--csvae_epochs",
+        type=int,
+        default=4000,
+        help="Number of CSVAE training epochs.",
+    )
+    csvae_group.add_argument(
+        "--plot_gradients",
+        type=str2bool,
+        default=False,
+        help="Save gradient plots during optimization-related runs.",
     )
 
-    # configs for sampling
-    parser.add_argument(
+    sample_group.add_argument(
         "--save_path",
         type=str,
         default="counterfactual_results",
-        help="Path to save synthetic data.",
+        help="Directory for generated counterfactual results.",
     )
-    parser.add_argument(
+    sample_group.add_argument(
         "--num_samples",
         type=int,
         default=-1,
-        help="Number of test samples to find CFs.",
+        help="Number of test instances to generate counterfactuals for.",
     )
-
-    parser.add_argument(
-        "--dice_optimization", type=str2bool, default=True, help="Use dice latent optim"
+    sample_group.add_argument(
+        "--dice_optimization",
+        type=str2bool,
+        default=True,
+        help="Use DiCE-style joint latent optimization.",
     )
-    parser.add_argument(
+    sample_group.add_argument(
         "--num_encoding",
         type=str,
         default="min_max_torch",
-        help="Encoding Num data (for VAE)",
+        help="Continuous feature encoding used by the generative model.",
     )
-    parser.add_argument(
+    sample_group.add_argument(
         "--decode_before_loss",
         type=str2bool,
         default=True,
-        help="Proximity loss in the output space",
+        help="Compute proximity loss after decoding to feature space.",
     )
-
-    parser.add_argument(
+    sample_group.add_argument(
         "--proximity_weight_input",
         type=float,
         default=1.0,
-        help="Proximity weight (loss calculated in input space)",
+        help="Weight of proximity loss in decoded feature space.",
     )
-    parser.add_argument(
+    sample_group.add_argument(
         "--proximity_weight_latent",
         type=float,
         default=1.0,
-        help="Proximity weight (loss calculated in latent space)",
+        help="Weight of proximity loss in latent space.",
     )
-    parser.add_argument(
+    sample_group.add_argument(
         "--diversity_weight",
         type=float,
         default=1.0,
-        help="Diversity weight for latent counterfactual sampling",
+        help="Weight of diversity regularization across CF candidates.",
     )
-    parser.add_argument(
+    sample_group.add_argument(
         "--latent_init_radius",
         type=float,
         default=0.5,
-        help="Initial radius for latent counterfactual candidates",
+        help="Initialization radius around the source latent code.",
     )
-    parser.add_argument(
+    sample_group.add_argument(
         "--proximity_latent_loss",
         type=str,
         default="L2",
-        help="Proximity loss (loss calculated in latent space)",
+        help="Latent-space proximity loss type.",
     )
-    parser.add_argument(
+    sample_group.add_argument(
         "--proximity_input_loss",
         type=str,
         default=None,
-        help="Proximity loss (loss calculated in input space)",
+        help="Input-space proximity loss type.",
     )
-    parser.add_argument(
+    sample_group.add_argument(
         "--plausibility_weight_latent",
         type=float,
         default=-1.0,
-        help="Plausibility loss weight (loss calculated in latent space)",
+        help="Weight of latent plausibility regularization.",
     )
-    parser.add_argument(
+    sample_group.add_argument(
         "--plausibility_latent_loss",
         type=str,
         default="GMM",
-        help="Plausibility loss (loss calculated in latent space)",
+        help="Latent plausibility loss type.",
     )
-
-    parser.add_argument(
-        "--immutable", type=str2bool, default=False, help="Consider immutable features"
+    sample_group.add_argument(
+        "--immutable",
+        type=str2bool,
+        default=False,
+        help="Enforce immutable feature constraints during sampling.",
     )
-
-    parser.add_argument(
+    sample_group.add_argument(
         "--total_CFs",
         type=int,
         default=1,
-        help="How many CFs to find for each instance",
+        help="Number of counterfactuals to generate per instance.",
+    )
+    sample_group.add_argument(
+        "--target_class",
+        type=int,
+        default=1,
+        help="Target class index for counterfactual generation.",
+    )
+    sample_group.add_argument(
+        "--min_iter", type=int, default=500, help="Minimum optimization iterations."
+    )
+    sample_group.add_argument(
+        "--max_iter", type=int, default=5000, help="Maximum optimization iterations."
     )
 
-    parser.add_argument("--min_iter", type=int, default=500, help="Min GD iterations")
-    parser.add_argument("--max_iter", type=int, default=5000, help="Max GD iterations")
-
-    # parser.add_argument('--repeats', type=int, default=None, help='Repeat experiments')
-
-    # GMM --------------------
-    parser.add_argument(
+    gmm_group.add_argument(
         "--samples",
         type=int,
         default=1000,
-        help="The number of total samples in dataset",
+        help="Number of samples used to fit the GMM plausibility model.",
     )
-    parser.add_argument(
+    gmm_group.add_argument(
         "--components",
         type=int,
         default=5,
-        help="The number of gaussian components in mixture model",
+        help="Number of Gaussian mixture components.",
     )
-    parser.add_argument(
-        "--dims", type=int, default=2, help="The number of data dimensions"
+    gmm_group.add_argument(
+        "--dims", type=int, default=2, help="Latent dimensionality for the GMM."
     )
-    parser.add_argument(
-        "--iterations", type=int, default=20_000, help="The number optimization steps"
+    gmm_group.add_argument(
+        "--iterations", type=int, default=20_000, help="Number of GMM optimization steps."
     )
-    parser.add_argument(
-        "--family", type=str, default="full", help="Model family, see `Mixture Types`"
+    gmm_group.add_argument(
+        "--family", type=str, default="full", help="Covariance family of the mixture model."
     )
-    parser.add_argument(
-        "--log_freq", type=int, default=5_000, help="Steps per log event"
+    gmm_group.add_argument(
+        "--log_freq", type=int, default=5_000, help="Logging frequency in optimization steps."
     )
-    parser.add_argument(
-        "--radius", type=float, default=8.0, help="L1 bound of data samples"
+    gmm_group.add_argument(
+        "--radius", type=float, default=8.0, help="L1 bound for sampled latent points."
     )
-    parser.add_argument(
+    gmm_group.add_argument(
         "--mixture_lr",
         type=float,
         default=3e-5,
-        help="Learning rate of mixture parameter (pi)",
+        help="Learning rate for mixture weights.",
     )
-    parser.add_argument(
+    gmm_group.add_argument(
         "--component_lr",
         type=float,
         default=1e-2,
-        help="Learning rate of component parameters (mus, sigmas)",
+        help="Learning rate for component means and covariances.",
     )
-    parser.add_argument(
+    gmm_group.add_argument(
         "--visualize",
         type=bool,
         default=False,
-        help="True for visualization at each log event and end",
+        help="Visualize GMM fitting progress.",
     )
-    parser.add_argument("--seed", type=int, default=42, help="seed for numpy and torch")
 
-    # parser.add_argument('--ohe_min_max', type=str2bool, default=True, help='Use one hot opt for training black box clf')
-    # parser.add_argument('--latent_clf', type=str2bool, default=False, help='Use latent clf (competitor)')
-    # parser.add_argument('--steps', type=int, default=200, help='NFEs.')
-    # parser.add_argument('--validity', type=str2bool, default=True, help='Validity loss')
-    # parser.add_argument('--proximity', type=str2bool, default=True, help='Proximity loss')
-    # parser.add_argument('--sparsity', type=str2bool, default=True, help='Sparsity loss')
-    # parser.add_argument('--diffusion', type=str2bool, default=False, help='Perform diffusion steps')
-
-    """ configs for dice """
-
-    parser.add_argument(
-        "--dice_method", type=str, default="gradient", help="Which dice method to use"
+    dice_group.add_argument(
+        "--dice_method",
+        type=str,
+        default="gradient",
+        help="DiCE backend or optimization strategy.",
     )
-    parser.add_argument(
+    dice_group.add_argument(
         "--dice_post_hoc_sparsity",
         type=str2bool,
         default=False,
-        help="Use dice post processing on resulting CFs (sparsity)",
+        help="Apply DiCE post-hoc sparsity enhancement.",
     )
 
-    """ configs for valuation """
-
-    parser.add_argument(
-        "--pyod", type=str2bool, default=True, help="Use pyod for outlier detection"
+    evaluate_group.add_argument(
+        "--pyod", type=str2bool, default=True, help="Use PyOD for outlier detection."
     )
-    parser.add_argument(
-        "--get_stats", type=str2bool, default=True, help="Print stats also"
+    evaluate_group.add_argument(
+        "--get_stats", type=str2bool, default=True, help="Print summary statistics."
     )
-    parser.add_argument(
-        "--get_changed", type=str2bool, default=False, help="get features changed"
+    evaluate_group.add_argument(
+        "--get_changed",
+        type=str2bool,
+        default=False,
+        help="Report which features changed in generated counterfactuals.",
     )
 
     args = parser.parse_args()
 
     return args
-
-    # ''' configs for CTGAN '''
-
-    # parser.add_argument('-e', '--epochs', default=1000, type=int,
-    #                     help='Number of training epochs')
-    # parser.add_argument('--no-header', dest='header', action='store_false',
-    #                     help='The CSV file has no header. Discrete columns will be indices.')
-
-    # parser.add_argument('-m', '--metadata', help='Path to the metadata')
-    # parser.add_argument('-d', '--discrete',
-    #                     help='Comma separated list of discrete columns without whitespaces.')
-    # parser.add_argument('-n', '--num-samples', type=int,
-    #                     help='Number of rows to sample. Defaults to the training data size')
-
-    # parser.add_argument('--generator_lr', type=float, default=2e-4,
-    #                     help='Learning rate for the generator.')
-    # parser.add_argument('--discriminator_lr', type=float, default=2e-4,
-    #                     help='Learning rate for the discriminator.')
-
-    # parser.add_argument('--generator_decay', type=float, default=1e-6,
-    #                     help='Weight decay for the generator.')
-    # parser.add_argument('--discriminator_decay', type=float, default=0,
-    #                     help='Weight decay for the discriminator.')
-
-    # parser.add_argument('--embedding_dim', type=int, default=1024,
-    #                     help='Dimension of input z to the generator.')
-    # parser.add_argument('--generator_dim', type=str, default='1024,2048,2048,1024',
-    #                     help='Dimension of each generator layer. '
-    #                     'Comma separated integers with no whitespaces.')
-    # parser.add_argument('--discriminator_dim', type=str, default='1024,2048,2048,1024',
-    #                     help='Dimension of each discriminator layer. '
-    #                     'Comma separated integers with no whitespaces.')
-
-    # parser.add_argument('--batch_size', type=int, default=500,
-    #                     help='Batch size. Must be an even number.')
-    # parser.add_argument('--save', default=None, type=str,
-    #                     help='A filename to save the trained synthesizer.')
-    # parser.add_argument('--load', default=None, type=str,
-    #                     help='A filename to load a trained synthesizer.')
-
-    # parser.add_argument('--sample_condition_column', default=None, type=str,
-    #                     help='Select a discrete column name.')
-    # parser.add_argument('--sample_condition_column_value', default=None, type=str,
-    #                     help='Specify the value of the selected discrete column.')
-    # parser.add_argument('--train_black_box', default=True, type=bool,
-    #                     help='Train a black box clf on the embeddings')
-    # ''' configs for GReaT '''
-
-    # parser.add_argument('--bs', type=int, default=16, help='(Maximum) batch size')
-
-    # ''' configs for CoDi '''
-
-    # # General Options
-    # parser.add_argument('--logdir', type=str, default='./codi_exp', help='log directory')
-    # parser.add_argument('--train', action='store_true', help='train from scratch')
-    # parser.add_argument('--eval', action='store_true', help='load ckpt.pt and evaluate')
-
-    # # Network Architecture
-    # parser.add_argument('--encoder_dim', nargs='+', type=int, help='encoder_dim')
-    # parser.add_argument('--encoder_dim_con', type=str, default="512,1024,1024,512", help='encoder_dim_con')
-    # parser.add_argument('--encoder_dim_dis', type=str, default="512,1024,1024,512", help='encoder_dim_dis')
-    # parser.add_argument('--nf', type=int, help='nf')
-    # parser.add_argument('--nf_con', type=int, default=16, help='nf_con')
-    # parser.add_argument('--nf_dis', type=int, default=64, help='nf_dis')
-    # parser.add_argument('--input_size', type=int, help='input_size')
-    # parser.add_argument('--cond_size', type=int, help='cond_size')
-    # parser.add_argument('--output_size', type=int, help='output_size')
-    # parser.add_argument('--activation', type=str, default='relu', help='activation')
-
-    # # Training
-    # parser.add_argument('--training_batch_size', type=int, default=4096, help='batch size')
-    # parser.add_argument('--eval_batch_size', type=int, default=2100, help='batch size')
-    # parser.add_argument('--T', type=int, default=50, help='total diffusion steps')
-    # parser.add_argument('--beta_1', type=float, default=0.00001, help='start beta value')
-    # parser.add_argument('--beta_T', type=float, default=0.02, help='end beta value')
-    # parser.add_argument('--lr_con', type=float, default=2e-03, help='target learning rate')
-    # parser.add_argument('--lr_dis', type=float, default=2e-03, help='target learning rate')
-    # parser.add_argument('--total_epochs_both', type=int, default=20000, help='total training steps')
-    # parser.add_argument('--grad_clip', type=float, default=1., help="gradient norm clipping")
-    # parser.add_argument('--parallel', action='store_true', help='multi gpu training')
-
-    # # Sampling
-    # parser.add_argument('--sample_step', type=int, default=2000, help='frequency of sampling')
-
-    # # Continuous diffusion model
-    # parser.add_argument('--mean_type', type=str, default='epsilon', choices=['xprev', 'xstart', 'epsilon'], help='predict variable')
-    # parser.add_argument('--var_type', type=str, default='fixedsmall', choices=['fixedlarge', 'fixedsmall'], help='variance type')
-
-    # # Contrastive Learning
-    # parser.add_argument('--ns_method', type=int, default=0, help='negative condition method')
-    # parser.add_argument('--lambda_con', type=float, default=0.2, help='lambda_con')
-    # parser.add_argument('--lambda_dis', type=float, default=0.2, help='lambda_dis')
-    # ################
-
-    # # configs for TabDDPM
-    # parser.add_argument('--ddim', action = 'store_true', default=False, help='Whether use DDIM sampler')
-
-    # # configs for SMOTE
-    # parser.add_argument('--cat_encoding', type=str, default='one-hot', help='Encoding method for categorical features')

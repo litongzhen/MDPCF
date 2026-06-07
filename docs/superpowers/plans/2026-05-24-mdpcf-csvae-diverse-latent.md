@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace the MDPCF main VAE path with a CSVAE-backed latent model, keep `w` fixed during counterfactual search, and add latent diversity sampling on `z`.
+**Goal:** Use the MDPCF main CSVAE path with a CSVAE-backed latent model, keep `w` fixed during counterfactual search, and add latent diversity sampling on `z`.
 
-**Architecture:** MDPCF will keep its current training/sampling entry points, but the latent backend will change from a single VAE to a conditional VAE with two latents: `z` for label-related signal and `w` for instance-specific nuisance signal. Training will save both latent arrays and encoder/decoder checkpoints. Sampling will optimize multiple `z` candidates per negative instance while holding `w = w0` fixed, then decode and score the resulting CFs.
+**Architecture:** MDPCF will keep its current training/sampling entry points, with a CSVAE backend that has two latents: `z` for label-related signal and `w` for instance-specific nuisance signal. Training will save both latent arrays and encoder/decoder checkpoints. Sampling will optimize multiple `z` candidates per negative instance while holding `w = w0` fixed, then decode and score the resulting CFs.
 
 **Tech Stack:** PyTorch, pandas, numpy, existing `dice_ml` pipeline, existing dataset preprocessing helpers.
 
@@ -13,7 +13,7 @@
 ### Task 1: Replace the MDPCF latent backend with CSVAE
 
 **Files:**
-- Modify: `D:\CS Learning\因果推断\反事实解释\MDPCF\mdpcf\vae\model.py`
+- Modify: `D:\CS Learning\因果推断\反事实解释\MDPCF\mdpcf\csvae\model.py`
 
 - [ ] **Step 1: Define the CSVAE modules**
 
@@ -42,10 +42,10 @@ def csvae_loss(x_num, x_cat, recon_x_num, recon_x_cat, y, y_logits, mu_z, logvar
     return recon_loss + y_loss + kl_z + kl_w
 ```
 
-- [ ] **Step 3: Preserve `Encoder_model`, `Decoder_model`, `Encoder_model_Z` compatibility**
+- [ ] **Step 3: Preserve `Encoder_model` and `Decoder_model` compatibility**
 
 ```python
-class Encoder_model_Z(nn.Module):
+class Encoder_model(nn.Module):
     def forward(self, x_num, x_cat):
         return z
 ```
@@ -54,19 +54,19 @@ Keep the legacy classes working for any code path that still imports them, but m
 
 - [ ] **Step 4: Verify the file still imports cleanly**
 
-Run: `python -m py_compile mdpcf/vae/model.py`
+Run: `python -m py_compile mdpcf/csvae/model.py`
 Expected: no syntax errors.
 
-### Task 2: Rework VAE training to train CSVAE and save both latents
+### Task 2: Rework CSVAE training to save both latents
 
 **Files:**
-- Modify: `D:\CS Learning\因果推断\反事实解释\MDPCF\mdpcf\vae\main.py`
+- Modify: `D:\CS Learning\因果推断\反事实解释\MDPCF\mdpcf\csvae\main.py`
 - Modify: `D:\CS Learning\因果推断\反事实解释\MDPCF\utils_train.py`
 
 - [ ] **Step 1: Swap the imported model constructor**
 
 ```python
-from mdpcf.vae.model import Model_CSVAE
+from mdpcf.csvae.model import Model_CSVAE
 ```
 
 - [ ] **Step 2: Update the training loop to feed labels into the model**
@@ -92,7 +92,7 @@ np.save(f"{ckpt_dir}/test_w.npy", test_w)
 - [ ] **Step 4: Make `get_name_form_args` produce a CSVAE-specific ckpt folder**
 
 ```python
-output_file_name_vae = "_".join([
+output_file_name_csvae = "_".join([
     f"num_encoding[{args.num_encoding}]",
     f"num_loss[{args.num_reconstr_loss}]",
     "csvae",
@@ -101,7 +101,7 @@ output_file_name_vae = "_".join([
 
 - [ ] **Step 5: Run a smoke compile**
 
-Run: `python -m py_compile mdpcf/vae/main.py utils_train.py`
+Run: `python -m py_compile mdpcf/csvae/main.py utils_train.py`
 Expected: no syntax errors.
 
 ### Task 3: Update latent loading helpers for CSVAE checkpoints
@@ -112,10 +112,10 @@ Expected: no syntax errors.
 - [ ] **Step 1: Load the new CSVAE encoder/decoder checkpoints**
 
 ```python
-train_z = torch.tensor(np.load(f"{vae_ckpt_dir}/train_z.npy")).float()
-test_z = torch.tensor(np.load(f"{vae_ckpt_dir}/test_z.npy")).float()
-train_w = torch.tensor(np.load(f"{vae_ckpt_dir}/train_w.npy")).float()
-test_w = torch.tensor(np.load(f"{vae_ckpt_dir}/test_w.npy")).float()
+train_z = torch.tensor(np.load(f"{csvae_ckpt_dir}/train_z.npy")).float()
+test_z = torch.tensor(np.load(f"{csvae_ckpt_dir}/test_z.npy")).float()
+train_w = torch.tensor(np.load(f"{csvae_ckpt_dir}/train_w.npy")).float()
+test_w = torch.tensor(np.load(f"{csvae_ckpt_dir}/test_w.npy")).float()
 ```
 
 - [ ] **Step 2: Stop flattening token latents**
@@ -192,13 +192,13 @@ Expected: `cfs.csv` is written and at least some rows decode successfully.
 
 - [ ] **Step 1: Train on a small dataset slice**
 
-Run: `python main.py --dataname adult --method vae --mode train`
+Run: `python main.py --dataname adult --method csvae --mode train`
 Expected: CSVAE checkpoints and `train_z.npy` / `train_w.npy` / `test_z.npy` / `test_w.npy` exist.
 
 - [ ] **Step 2: Sample counterfactuals from the new checkpoint**
 
 Run: `python main.py --dataname adult --method mdpcf --mode sample --num_samples 10`
-Expected: sampling completes without loading the old VAE latent layout.
+Expected: sampling completes with the CSVAE latent layout.
 
 - [ ] **Step 3: Check that `w` is not being optimized**
 
@@ -207,7 +207,7 @@ Inspect the sampling code path and confirm only `z_cf` has `requires_grad_(True)
 - [ ] **Step 4: Commit**
 
 ```bash
-git add mdpcf/vae/model.py mdpcf/vae/main.py mdpcf/latent_utils.py mdpcf/sample.py utils_train.py docs/superpowers/plans/2026-05-24-mdpcf-csvae-diverse-latent.md
+git add mdpcf/csvae/model.py mdpcf/csvae/main.py mdpcf/latent_utils.py mdpcf/sample.py utils_train.py docs/superpowers/plans/2026-05-24-mdpcf-csvae-diverse-latent.md
 git commit -m "feat: switch mdpcf to csvae latent sampling"
 ```
 

@@ -47,7 +47,7 @@ for i, method in enumerate(methods):
     output_folder_name_method = f'{output_folder_name}/{method}'
 
     if method == "DiCE_latent":
-        output_folder_name_method = f'{output_folder_name_method}/num_encoding[min_max_torch]_num_loss[L2]_cat_actv[gumbel_softmax, tau=1.0]_cont_actv[sigmoid]_reparam/gradient/proximity_weight_input[1.0]_hidden_dims[16]_proximity_weight_latent[1.0]_proximity_latent_loss[L2]'
+        output_folder_name_method = f'{output_folder_name_method}/num_encoding[min_max_torch]_num_loss[L2]_cat_actv[gumbel_softmax, tau=1.0]_cont_actv[sigmoid]/gradient/proximity_weight_input[1.0]_hidden_dims[16]_proximity_weight_latent[1.0]_proximity_latent_loss[L2]'
     if method == "DiCE":
         output_folder_name_method = f'{output_folder_name_method}/gradient/proximity_weight_input[1.0]_hidden_dims[16]'
 

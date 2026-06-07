@@ -14,7 +14,7 @@ import sys
 
 from utils_train import preprocess, TabularDataset, get_name_form_args
 
-from mdpcf.vae.model import BBMLPCLF
+from mdpcf.csvae.model import BBMLPCLF
 from mdpcf.latent_utils import get_input_generate, recover_data, split_num_cat_target
 import numpy as np
 import pandas as pd
@@ -81,7 +81,11 @@ def main(args):
     if not os.path.exists(save_path):
         os.makedirs(save_path)
 
-    _, _, _, _, _, _, info, num_inverse, cat_inverse, y = get_input_generate(args)
+    generation_inputs = get_input_generate(args)
+    info = generation_inputs["info"]
+    num_inverse = generation_inputs["num_inverse"]
+    cat_inverse = generation_inputs["cat_inverse"]
+    y = generation_inputs["y"]
 
     target_class = info["target_class"]
     negative_class = info["negative_class"]

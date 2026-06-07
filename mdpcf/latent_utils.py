@@ -4,29 +4,17 @@ import numpy as np
 import pandas as pd
 import torch
 from utils_train import preprocess, get_name_form_args
-from mdpcf.vae.model import Decoder_model, Encoder_model, Encoder_model_Z
-import torch.nn.functional as F
+from mdpcf.csvae.model import Decoder_model
 
 
-def get_input_train(args):
-    dataname = args.dataname
-
-    curr_dir = os.path.dirname(os.path.abspath(__file__))
-    dataset_dir = f"data/{dataname}"
-
-    with open(f"{dataset_dir}/info.json", "r") as f:
-        info = json.load(f)
-
-    ckpt_dir = f"{curr_dir}/ckpt/{dataname}/"
-    embedding_save_path = f"{curr_dir}/vae/ckpt/{dataname}/train_z.npy"
-    train_z = torch.tensor(np.load(embedding_save_path)).float()
-    train_w = torch.tensor(np.load(f"{curr_dir}/vae/ckpt/{dataname}/train_w.npy")).float()
-    return train_z, train_w, curr_dir, dataset_dir, ckpt_dir, info
+def load_test_latent_arrays(csvae_ckpt_dir):
+    test_z = torch.tensor(np.load(os.path.join(csvae_ckpt_dir, "test_z.npy"))).float()
+    test_w = torch.tensor(np.load(os.path.join(csvae_ckpt_dir, "test_w.npy"))).float()
+    return test_z, test_w
 
 
 def get_input_generate(args):
     dataname = args.dataname
-    gumbel_softmax = args.gumbel_softmax
     num_encoding = args.num_encoding
 
     # activations
@@ -34,16 +22,14 @@ def get_input_generate(args):
     gumbel_softmax = args.gumbel_softmax
     tau = args.tau
 
-    output_file_name_vae = get_name_form_args(args)
-
     curr_dir = os.path.dirname(os.path.abspath(__file__))
+
+    output_file_name_csvae = get_name_form_args(args)
+
     dataset_dir = f"data/{dataname}"
 
     decoder_save_path = (
-        f"{curr_dir}/vae/ckpt/{dataname}/{output_file_name_vae}/decoder.pt"
-    )
-    encoder_save_path = (
-        f"{curr_dir}/vae/ckpt/{dataname}/{output_file_name_vae}/encoder.pt"
+        f"{curr_dir}/csvae/ckpt/{dataname}/{output_file_name_csvae}/decoder.pt"
     )
 
     with open(f"{dataset_dir}/info.json", "r") as f:
@@ -51,31 +37,14 @@ def get_input_generate(args):
 
     task_type = info["task_type"]
 
-    ckpt_dir = f"{curr_dir}/ckpt/{dataname}/"
-
-    vae_ckpt_dir = f"{curr_dir}/vae/ckpt/{dataname}/{output_file_name_vae}"
+    csvae_ckpt_dir = f"{curr_dir}/csvae/ckpt/{dataname}/{output_file_name_csvae}"
 
     _, _, categories, d_numerical, num_inverse, cat_inverse, y = preprocess(
         dataset_dir, task_type=task_type, inverse=True, num_encoding=num_encoding
     )
 
     if args.method == "mdpcf":
-        embedding_save_path = (
-            f"{curr_dir}/vae/ckpt/{dataname}/{output_file_name_vae}/train_z.npy"
-        )
-        embedding_save_path_test = (
-            f"{curr_dir}/vae/ckpt/{dataname}/{output_file_name_vae}/test_z.npy"
-        )
-        embedding_save_path_w = (
-            f"{curr_dir}/vae/ckpt/{dataname}/{output_file_name_vae}/train_w.npy"
-        )
-        embedding_save_path_w_test = (
-            f"{curr_dir}/vae/ckpt/{dataname}/{output_file_name_vae}/test_w.npy"
-        )
-        train_z = torch.tensor(np.load(embedding_save_path)).float()
-        test_z = torch.tensor(np.load(embedding_save_path_test)).float()
-        train_w = torch.tensor(np.load(embedding_save_path_w)).float()
-        test_w = torch.tensor(np.load(embedding_save_path_w_test)).float()
+        test_z, test_w = load_test_latent_arrays(csvae_ckpt_dir)
 
         pre_decoder = Decoder_model(
             2,
@@ -89,78 +58,27 @@ def get_input_generate(args):
             tau=tau,
         )
 
-        if args.reparam:
-            pre_encoder = Encoder_model_Z(
-                2, d_numerical, categories, 4, n_head=1, factor=32
-            )
-        else:
-            pre_encoder = Encoder_model(
-                2, d_numerical, categories, 4, n_head=1, factor=32
-            )
-
         pre_decoder.load_state_dict(torch.load(decoder_save_path, map_location="cpu"))
 
         info["pre_decoder"] = pre_decoder
+        info["latent_dim"] = test_z.shape[-1]
+        info["w_dim"] = test_w.shape[-1]
 
-        pre_encoder.load_state_dict(torch.load(encoder_save_path, map_location="cpu"))
+        return {
+            "test_z": test_z,
+            "test_w": test_w,
+            "info": info,
+            "num_inverse": num_inverse,
+            "cat_inverse": cat_inverse,
+            "y": y,
+        }
 
-        info["pre_encoder"] = pre_encoder
-
-        info["latent_dim"] = train_z.shape[-1]
-        info["w_dim"] = train_w.shape[-1]
-
-        return (
-            train_z,
-            test_z,
-            train_w,
-            test_w,
-            curr_dir,
-            dataset_dir,
-            ckpt_dir,
-            vae_ckpt_dir,
-            info,
-            num_inverse,
-            cat_inverse,
-            y,
-        )
-
-    else:
-        return (
-            None,
-            None,
-            None,
-            None,
-            curr_dir,
-            dataset_dir,
-            ckpt_dir,
-            vae_ckpt_dir,
-            info,
-            num_inverse,
-            cat_inverse,
-            y,
-        )
-
-
-def decode_input(syn_data, info, num_inverse, cat_inverse, inverse_num=False):
-    device = syn_data.device
-    pre_decoder = info["pre_decoder"].to(device)
-    pre_decoder.eval()
-    z_dim = info["latent_dim"]
-    z = syn_data[:, :z_dim]
-    w = syn_data[:, z_dim:]
-    norm_input = pre_decoder(z, w)
-    x_hat_num, x_hat_cat = norm_input
-    syn_cat = []
-    for pred in x_hat_cat:
-        gumbel_softmax_pred = F.gumbel_softmax(pred, tau=1, hard=True)
-        syn_cat.append(gumbel_softmax_pred)
-    syn_num = x_hat_num
-    syn_cat = torch.cat(syn_cat, dim=1)
-
-    if inverse_num:
-        syn_num = num_inverse(syn_num)
-    decoded = torch.cat((syn_num, syn_cat), dim=1)
-    return decoded
+    return {
+        "info": info,
+        "num_inverse": num_inverse,
+        "cat_inverse": cat_inverse,
+        "y": y,
+    }
 
 
 @torch.no_grad()
@@ -203,12 +121,6 @@ def recover_data(syn_num, syn_cat, info):
         elif i in set(cat_col_idx):
             syn_df[i] = syn_cat[:, idx_mapping[i] - len(num_col_idx)]
     return syn_df
-
-
-def process_invalid_id(syn_cat, min_cat, max_cat):
-    syn_cat = np.clip(syn_cat, min_cat, max_cat)
-
-    return syn_cat
 
 
 def generate_equiangular_unit_vectors(n, d=None):

@@ -11,25 +11,22 @@ import os
 from tqdm import tqdm
 import json
 import time
-import pandas as pd
 
-from mdpcf.vae.model import (
-    Model_VAE,
+from mdpcf.csvae.model import (
+    Model_CSVAE,
     Encoder_model,
     Decoder_model,
     BBMLPCLF,
-    Encoder_model_Z,
 )
 
-from utils_train import preprocess, TabularDataset, get_name_form_args
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score
-import joblib
-
+from utils_train import (
+    preprocess,
+    TabularDataset,
+    get_name_form_args,
+    get_black_box_model_path,
+    save_run_config,
+)
 warnings.filterwarnings("ignore")
-from sklearn.pipeline import Pipeline
-from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
 import torch.optim as optim
 
 # Transformer 全局超参数
@@ -38,7 +35,6 @@ WD = 0  # 权重衰减
 D_TOKEN = 4  # Token 嵌入维度 (Transformer 的 d_model 基础)
 LATENT_DIM = 4
 W_DIM = 4
-TOKEN_BIAS = True
 N_HEAD = 1  # Attention 头数
 FACTOR = 32  # 隐藏层维度的倍数因子
 NUM_LAYERS = 2  # Transformer 层数
@@ -125,21 +121,6 @@ def compute_loss(
     return num_loss, cat_loss, loss_kld_z, loss_kld_w, loss_y, acc
 
 
-def concatenate_input_dims(x, tensor=False):
-    shape = x.shape
-    # shape[:-2] -> 获取除了最后两维之外的所有维度（通常是 Batch Size）
-    # shape[-2] * shape[-1] -> 计算最后两维的乘积（合并后的总特征数）
-    new_shape = shape[:-2] + (shape[-2] * shape[-1],)
-
-    # 执行 reshape 操作，把最后两维压扁
-    reshaped_x = x.reshape(new_shape)
-
-    # 如果需要，转成 PyTorch Tensor
-    if tensor:
-        return torch.tensor(reshaped_x)
-    return reshaped_x
-
-
 def train_black_box_clf_original_data(
     info,
     train_loader,
@@ -152,15 +133,12 @@ def train_black_box_clf_original_data(
     hidden_dims=None,
 ):
     # 节省计算资源和时间 —— 如果相同配置的模型已经训练好了，就不再重复训练
-    model_filename = f"{data_dir}/black_box_mlp.pkl"
-    if cat_encoding == "one-hot-drop-bin":
-        model_filename = f"{data_dir}/black_box_mlp_ohe_drop_bin.pkl"
-
-    if not gumbel_softmax:
-        model_filename = f"{data_dir}/black_box_mlp_no_gumbel_softmax.pkl"
-
-    if hidden_dims is not None:
-        model_filename = f"{data_dir}/black_box_mlp_hidden_{hidden_dims}.pkl"
+    model_filename = get_black_box_model_path(
+        data_dir=data_dir,
+        cat_encoding=cat_encoding,
+        hidden_dims=hidden_dims,
+        gumbel_softmax=gumbel_softmax,
+    )
 
     if os.path.isfile(model_filename):
         print("\tBlack box CLF on original data is already trained")
@@ -275,57 +253,6 @@ def train_black_box_clf_original_data(
     torch.save(clf.state_dict(), model_filename)
 
 
-def train_black_box_clf_latent(X, y, info, X_test=None, y_test=None, ckpt_dir=""):
-    # X 是 Encoder 输出的潜在向量序列
-    # 形状通常是 [Batch_Size, Num_Tokens, Token_Dim] (3D Tensor)
-
-    # 切掉 [CLS] Token
-    # Transformer 通常会在序列最前面加一个特殊的 [CLS] token (index 0)。
-    # 这里只取 index 1 之后的部分，即具体的特征 token。
-    X = X[:, 1:, :]
-    # 把最后两个维度 (Num_Tokens, Token_Dim) 压扁成一个长向量，变成 [Batch_Size, Total_Latent_Dim]，这样才能喂给 MLP。
-    X = concatenate_input_dims(X, tensor=True)
-    # 映射类别标签到数值
-    class_mapping = {info["target_class"]: 1, info["negative_class"]: 0}
-    y_n = np.array([class_mapping[class_name[0]] for class_name in y])
-    y = torch.tensor(y_n)
-    # 初始化 MLP 分类器，输入维度 X.shape[-1] 是展平后的潜在向量长度
-    clf = BBMLPCLF(X.shape[-1])
-    criterion = nn.CrossEntropyLoss()  # Use Cross Entropy Loss for classification
-    optimizer = optim.Adam(clf.parameters(), lr=0.001)
-
-    # Training loop
-    epochs = 100
-    for epoch in range(epochs):
-        optimizer.zero_grad()  # Zero the gradients
-        outputs = clf(X)  # Forward pass
-        loss = criterion(outputs, y)  # Compute loss
-        loss.backward()  # Backward pass
-        optimizer.step()  # Optimize
-
-    model_filename = f"{ckpt_dir}/black_box_latent.pt"
-
-    torch.save(clf.state_dict(), model_filename)
-
-    if X_test is not None:
-
-        X_test = X_test[:, 1:, :]
-        X_test = concatenate_input_dims(X_test, tensor=True)
-
-        y_test_n = np.array([class_mapping[class_name[0]] for class_name in y_test])
-
-        # Put the model in evaluation mode
-        clf.eval()
-
-        # Pass the test dataset through the clf to get predictions
-        with torch.no_grad():
-            test_outputs = clf(X_test)
-
-        _, y_pred = torch.max(test_outputs, 1)
-        acc = accuracy_score(y_test_n, y_pred)
-        print(f"\tInfo: Black box MLP clf (latent) accuracy on test set: {acc:.4f}")
-
-
 def main(args):
     # 读取参数
     dataname = args.dataname
@@ -334,8 +261,6 @@ def main(args):
     max_beta = args.max_beta
     min_beta = args.min_beta
     lambd = args.lambd
-
-    reparam = args.reparam
 
     # encoding
     num_encoding = args.num_encoding
@@ -349,18 +274,19 @@ def main(args):
     tau = args.tau
     kl_weight = args.kl_weight
     hidden_dims = args.hidden_dims
-    output_file_name_vae = get_name_form_args(args)
     # 创建保存模型权重的文件夹 (ckpt/dataname/实验名)
     curr_dir = os.path.dirname(os.path.abspath(__file__))
-    ckpt_dir = os.path.join(curr_dir, "ckpt", dataname, output_file_name_vae)
+    output_file_name_csvae = get_name_form_args(args)
+    ckpt_dir = os.path.join(curr_dir, "ckpt", dataname, output_file_name_csvae)
     if not os.path.exists(ckpt_dir):
         os.makedirs(ckpt_dir)
     else:
-        print("CSVAE for setting", output_file_name_vae, "already exists")
+        print("CSVAE for setting", output_file_name_csvae, "already exists")
         # exit(0)
     model_save_path = os.path.join(ckpt_dir, "model.pt")
     encoder_save_path = os.path.join(ckpt_dir, "encoder.pt")
     decoder_save_path = os.path.join(ckpt_dir, "decoder.pt")
+    save_run_config(args, ckpt_dir)
 
     device = args.device
     batch_size = 4096
@@ -404,9 +330,7 @@ def main(args):
         num_workers=4,
     )
 
-    black_box_path = f"{data_dir}/black_box_mlp.pkl"
-    if hidden_dims is not None:
-        black_box_path = f"{data_dir}/black_box_mlp_hidden_{hidden_dims}.pkl"
+    black_box_path = get_black_box_model_path(args, data_dir)
 
     if not os.path.isfile(black_box_path):
         raise FileNotFoundError(
@@ -414,7 +338,7 @@ def main(args):
         )
     print(f"Found black box classifier: {black_box_path}")
 
-    model = Model_VAE(
+    model = Model_CSVAE(
         NUM_LAYERS,
         d_numerical,
         categories,
@@ -430,14 +354,9 @@ def main(args):
     )
     model = model.to(device)
 
-    if reparam:
-        pre_encoder = Encoder_model_Z(
-            NUM_LAYERS, d_numerical, categories, D_TOKEN, n_head=N_HEAD, factor=FACTOR
-        ).to(device)
-    else:
-        pre_encoder = Encoder_model(
-            NUM_LAYERS, d_numerical, categories, D_TOKEN, n_head=N_HEAD, factor=FACTOR
-        ).to(device)
+    pre_encoder = Encoder_model(
+        NUM_LAYERS, d_numerical, categories, D_TOKEN, n_head=N_HEAD, factor=FACTOR
+    ).to(device)
 
     pre_decoder = Decoder_model(
         NUM_LAYERS,
@@ -458,7 +377,7 @@ def main(args):
         optimizer, mode="min", factor=0.95, patience=10
     )
 
-    num_epochs = args.vae_epochs
+    num_epochs = args.csvae_epochs
     best_train_loss = float("inf")
 
     current_lr = optimizer.param_groups[0]["lr"]
@@ -640,8 +559,6 @@ def main(args):
         np.save(f"{ckpt_dir}/test_w.npy", test_w)
 
         print("Successfully save pretrained embeddings in disk!")
-
-    # train_black_box_clf_latent(train_z, y_train, info, X_test=test_z, y_test=y_test, ckpt_dir=ckpt_dir)
 
 
 if __name__ == "__main__":

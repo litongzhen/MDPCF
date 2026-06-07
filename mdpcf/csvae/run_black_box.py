@@ -1,5 +1,5 @@
-from mdpcf.vae.train_black_box import main as train_black_box
-from mdpcf.vae.test_black_box import main as test_black_box
+from mdpcf.csvae.train_black_box import main as train_black_box
+from mdpcf.csvae.test_black_box import main as test_black_box
 
 
 def main(args):

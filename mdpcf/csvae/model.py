@@ -65,25 +65,6 @@ class Tokenizer(nn.Module):
         return x
 
 
-class MLP(nn.Module):
-    def __init__(self, input_dim, hidden_dim, output_dim, dropout=0.5):
-        super(MLP, self).__init__()
-        self.input_dim = input_dim
-        self.hidden_dim = hidden_dim
-        self.output_dim = output_dim
-        self.dropout = dropout
-
-        self.fc1 = nn.Linear(input_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, output_dim)
-        self.dropout = nn.Dropout(p=dropout)
-
-    def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = self.dropout(x)
-        x = self.fc2(x)
-        return x
-
-
 class MultiheadAttention(nn.Module):
     def __init__(self, d, n_heads, dropout, initialization="kaiming"):
 
@@ -242,180 +223,6 @@ class Transformer(nn.Module):
         return x
 
 
-# 旧版 CSVAE 草稿实现，当前 MDPCF 主链路不再使用。
-
-class _DeprecatedCSVAE_Tabular(nn.Module):
-    def __init__(
-        self,
-        d_numerical,
-        categories,
-        num_layers,
-        hid_dim,
-        dim_z,  # Z 空间的维度 (负责 Label 相关特征)
-        dim_w,  # W 空间的维度 (负责 Label 无关的保留特征)
-        n_classes=2,
-        n_head=1,
-        factor=4,
-        bias=True,
-    ):
-        super(_DeprecatedCSVAE_Tabular, self).__init__()
-
-        self.d_numerical = d_numerical
-        self.categories = categories
-        self.hid_dim = hid_dim
-        self.dim_z = dim_z
-        self.dim_w = dim_w
-        d_token = hid_dim
-        self.n_head = n_head
-
-        # 表格数据 Tokenizer (复用原版)
-        self.Tokenizer = Tokenizer(d_numerical, categories, d_token, bias=bias)
-
-        # ------------------ W 空间编码器 (EncoderW) ------------------
-        # 输入 X 和 Y (通过额外 token 传入)
-        self.encoder_w_transformer = Transformer(num_layers, hid_dim, n_head, hid_dim, factor)
-        self.encoder_w_mu = nn.Linear(hid_dim, dim_w)
-        self.encoder_w_logvar = nn.Linear(hid_dim, dim_w)
-
-        # ------------------ Z 空间编码器 (EncoderZ) ------------------
-        # 只输入 X
-        self.encoder_z_transformer = Transformer(num_layers, hid_dim, n_head, hid_dim, factor)
-        self.encoder_z_mu = nn.Linear(hid_dim, dim_z)
-        self.encoder_z_logvar = nn.Linear(hid_dim, dim_z)
-
-        # ------------------ X 解码器 (DecoderX) ------------------
-        # 接收 W 和 Z 的拼接
-        self.decoder_proj = nn.Linear(dim_w + dim_z, hid_dim)
-        self.decoder = Transformer(num_layers, hid_dim, n_head, hid_dim, factor)
-
-        # ------------------ Y 预测器 (DecoderY) ------------------
-        # 强制 Z 空间包含类别信息
-        self.decoder_y = nn.Sequential(
-            nn.Linear(dim_z, hid_dim // 2),
-            nn.ReLU(),
-            nn.Linear(hid_dim // 2, n_classes)
-        )
-
-    def reparameterize(self, mu, logvar):
-        std = torch.exp(0.5 * logvar)
-        eps = torch.randn_like(std)
-        return mu + eps * std
-
-    def forward(self, x_num, x_cat, y=None):
-        """
-        训练时需要传入 y 来编码 w
-        """
-        # 将表格特征转为 token embeddings
-        x_tokens = self.Tokenizer(x_num, x_cat)
-        
-        # --- Z 通道 (独立于 Y 提取特征) ---
-        z_hidden = self.encoder_z_transformer(x_tokens)
-        # 取 [CLS] token (索引 0) 或均值池化作为图表示，原版取全序列? 
-        # 原版直接将 sequence 映射，这里假设我们取 [CLS] token 用于潜变量
-        z_cls = z_hidden[:, 0, :] 
-        mu_z = self.encoder_z_mu(z_cls)
-        logvar_z = self.encoder_z_logvar(z_cls)
-        z = self.reparameterize(mu_z, logvar_z)
-
-        # --- Y 预测 ---
-        y_pred = self.decoder_y(z)
-
-        # --- W 通道 (融合 Y 提取剩余特征) ---
-        if y is not None:
-            # 简单做法：将 Y 映射后作为一个额外的 Token 拼接到序列中，或者加到 CLS token 上
-            # 这里简化处理，可以针对 tabular 数据做更精细的 y 融合
-            w_hidden = self.encoder_w_transformer(x_tokens)
-            w_cls = w_hidden[:, 0, :]
-            mu_w = self.encoder_w_mu(w_cls)
-            logvar_w = self.encoder_w_logvar(w_cls)
-            w = self.reparameterize(mu_w, logvar_w)
-        else:
-            w, mu_w, logvar_w = None, None, None
-
-        # --- 解码 X ---
-        if w is not None:
-            # 拼接 w 和 z，投影回 token 维度
-            zw = torch.cat([z, w], dim=-1)
-            decoder_input_cls = self.decoder_proj(zw).unsqueeze(1) # [B, 1, hid_dim]
-            
-            # 为了让 decoder 运作，可以构造一个伪 token 序列，
-            # 或者像原版一样把 zw 广播到所有 token 的位置
-            # 原版是 h = self.decoder(z[:, 1:])，这里我们稍作适配
-            batch_size = x_num.size(0)
-            seq_len = x_tokens.size(1) - 1 # 减去 CLS
-            
-            # 构造解码输入
-            decoder_seq = decoder_input_cls.repeat(1, seq_len, 1)
-            h = self.decoder(decoder_seq)
-        else:
-            h = None
-
-        return h, y_pred, (mu_z, logvar_z, z), (mu_w, logvar_w, w)
-        
-
-
-
-class Reconstructor(nn.Module):
-    def __init__(
-        self,
-        d_numerical,
-        categories,
-        d_token,
-        gumbel_softmax=False,
-        tau=1.0,
-        sigmoid=False,
-    ):
-        super(Reconstructor, self).__init__()
-
-        self.d_numerical = d_numerical
-        self.categories = categories
-        self.d_token = d_token
-        self.gumbel_softmax = gumbel_softmax
-        self.sigmoid = sigmoid
-        self.tau = tau  # temperature for Gumbel-Softmax
-
-        self.weight = nn.Parameter(Tensor(d_numerical, d_token))
-        nn.init.xavier_uniform_(self.weight, gain=1 / math.sqrt(2))
-        self.cat_recons = nn.ModuleList()
-
-        for d in categories:
-            recon = nn.Linear(d_token, d)
-            nn.init.xavier_uniform_(recon.weight, gain=1 / math.sqrt(2))
-            self.cat_recons.append(recon)
-
-    def forward(self, h):
-        h_num = h[:, : self.d_numerical]
-        h_cat = h[:, self.d_numerical :]
-
-        recon_x_num = torch.mul(h_num, self.weight.unsqueeze(0)).sum(-1)
-
-        if self.sigmoid:
-            recon_x_num = torch.sigmoid(recon_x_num)
-
-        recon_x_cat = []
-
-        for i, recon in enumerate(self.cat_recons):
-
-            logits = recon(h_cat[:, i])
-
-            if self.gumbel_softmax:
-                gumbel_softmax_sample = F.gumbel_softmax(
-                    logits, tau=self.tau, hard=True
-                )
-                # print(gumbel_softmax_sample[0])
-                # exit(1)
-                # gumbel_softmax_sample = torch.nn.Softmax(dim=1)(logits)
-                recon_x_cat.append(gumbel_softmax_sample)
-            else:
-                recon_x_cat.append(logits)
-
-        return recon_x_num, recon_x_cat
-
-
-def _kl_standard_normal(mu: torch.Tensor, logvar: torch.Tensor) -> torch.Tensor:
-    return -0.5 * torch.mean(1 + logvar - mu.pow(2) - logvar.exp())
-
-
 class CSVAEEncoder(nn.Module):
     def __init__(
         self,
@@ -565,9 +372,6 @@ class Model_CSVAE(nn.Module):
         return recon_x_num, recon_x_cat, mu_z, logvar_z, z, mu_w, logvar_w, w, y_logits
 
 
-Model_VAE = Model_CSVAE
-
-
 class Encoder_model(nn.Module):
     def __init__(
         self, num_layers, d_numerical, categories, d_token, n_head, factor, bias=True
@@ -577,8 +381,8 @@ class Encoder_model(nn.Module):
             num_layers, d_numerical, categories, d_token, dim_z=d_token, dim_w=d_token, n_head=n_head, factor=factor, bias=bias
         )
 
-    def load_weights(self, Pretrained_VAE):
-        self.model.load_state_dict(Pretrained_VAE.encoder.state_dict())
+    def load_weights(self, pretrained_csvae):
+        self.model.load_state_dict(pretrained_csvae.encoder.state_dict())
 
     def forward(self, x_num, x_cat):
         _, _, z, _, _, _, _ = self.model(x_num, x_cat)
@@ -611,8 +415,8 @@ class Decoder_model(nn.Module):
             tau=tau,
         )
 
-    def load_weights(self, Pretrained_VAE):
-        self.model.load_state_dict(Pretrained_VAE.decoder.state_dict())
+    def load_weights(self, pretrained_csvae):
+        self.model.load_state_dict(pretrained_csvae.decoder.state_dict())
 
     def forward(self, z, w=None):
         if z.dim() == 3:
@@ -622,54 +426,6 @@ class Decoder_model(nn.Module):
             z, w = z[:, :half], z[:, half:]
         x_hat_num, x_hat_cat = self.model(z, w)
         return x_hat_num, x_hat_cat
-
-
-class Encoder_model_Z(nn.Module):
-    def __init__(
-        self, num_layers, d_numerical, categories, d_token, n_head, factor, bias=True
-    ):
-        super(Encoder_model_Z, self).__init__()
-        self.model = CSVAEEncoder(
-            num_layers, d_numerical, categories, d_token, dim_z=d_token, dim_w=d_token, n_head=n_head, factor=factor, bias=bias
-        )
-
-    def load_weights(self, Pretrained_VAE):
-        self.model.load_state_dict(Pretrained_VAE.encoder.state_dict())
-
-    def forward(self, x_num, x_cat):
-        _, _, z, _, _, _, _ = self.model(x_num, x_cat)
-        return z
-
-
-# # class Decoder_model_Z(nn.Module):
-# #     def __init__(self, num_layers, d_numerical, categories, d_token, n_head, factor, bias = True, gumbel_softmax=False, sigmoid=False, tau=1.0):
-# #         super(Decoder_model_Z, self).__init__()
-# #         self.VAE_Decoder = Transformer(num_layers, d_token, n_head, d_token, factor)
-# #         self.Detokenizer = Reconstructor(d_numerical, categories, d_token, gumbel_softmax=gumbel_softmax, sigmoid=sigmoid, tau=tau)
-
-# #     def load_weights(self, Pretrained_VAE):
-# #         self.VAE_Decoder.load_state_dict(Pretrained_VAE.VAE.decoder.state_dict())
-# #         self.Detokenizer.load_state_dict(Pretrained_VAE.Reconstructor.state_dict())
-
-# #     def forward(self, z):
-
-# #         h = self.VAE_Decoder(z)
-# #         x_hat_num, x_hat_cat = self.Detokenizer(h)
-
-# #         return x_hat_num, x_hat_cat
-
-
-# # class BBMLPCLF(nn.Module):
-# #     def __init__(self, input_size, output_size=2, hidden_size=768):
-# #         super(BBMLPCLF, self).__init__()
-# #         self.fc1 = nn.Linear(input_size, hidden_size)
-# #         self.fc2 = nn.Linear(hidden_size, output_size)
-
-# #     def forward(self, x):
-# #         x = F.relu(self.fc1(x))
-# #         x = self.fc2(x)
-# #         x = torch.sigmoid(x)  # Apply sigmoid to the output
-# #         return x
 
 
 class BBMLPCLF(nn.Module):
