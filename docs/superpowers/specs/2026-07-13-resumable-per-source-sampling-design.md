@@ -1,39 +1,39 @@
-# Resumable Per-Source Sampling Design
+# 可恢复的逐源样本采样设计
 
-## Goal
+## 目标
 
-Make MDPCE sampling observable and restartable at source-sample granularity without changing counterfactual optimization, evaluation metrics, or the final output schema.
+在不改变反事实优化过程、评估指标或最终输出格式的前提下，使 MDPCE 采样过程能够显示进度，并可按源样本粒度中断后恢复。
 
-## Scope
+## 范围
 
-The sampling loop processes source instances independently.  Each source instance is one atomic checkpoint unit.  A completed source is never optimized again after a restart, whether it produced valid counterfactuals or not.  An interruption during an individual source leaves no completion marker, so that source is recomputed on the next run.
+采样循环中的每个源样本相互独立，每个样本构成一个原子检查点单元。重启后，已经完整处理的样本不会再次优化，无论该样本是否生成了有效反事实。若某个样本在处理过程中中断，则不会留下完成标记；下次运行时重新计算该样本。
 
-## Checkpoint Layout
+## 检查点目录结构
 
-For an existing result directory `save_path`, sampling writes under `save_path/checkpoints/`:
+对于已有结果目录 `save_path`，采样过程在 `save_path/checkpoints/` 下写入：
 
-- `sources/<id>.json`: completion marker containing the source id, completion status, and per-source sampling counters.
-- `cfs/<id>.csv`: selected final counterfactuals for a successful source.
-- `latents/<id>.csv`: matching latent vectors for a successful source.
-- `projection/<id>.csv`: projection-shift records when the source reached projection.
-- `posthoc_sparsity/<id>.csv` and `posthoc_diversity/<id>.csv`: optional post-hoc records when enabled.
+- `sources/<id>.json`：完成标记，记录源样本 id、完成状态和该样本的采样统计量。
+- `cfs/<id>.csv`：成功样本最终选出的反事实。
+- `latents/<id>.csv`：与反事实一一对应的潜变量。
+- `projection/<id>.csv`：样本进入投影阶段后产生的投影偏移记录。
+- `posthoc_sparsity/<id>.csv` 与 `posthoc_diversity/<id>.csv`：启用后处理时的可选记录。
 
-Every shard is written to a temporary sibling file and atomically replaced.  The source JSON marker is written only after all relevant shards have been committed.  The marker is therefore the sole authority for skip/resume decisions.
+每个分片先写入同目录的临时文件，再通过原子替换提交。仅当相关分片均已提交后，才写入该样本的 JSON 完成标记。因此，完成标记是恢复与跳过决策的唯一依据。
 
-## Runtime Behavior
+## 运行行为
 
-At startup, the sampler discovers valid source markers and skips exactly those source ids.  It shows a progress bar over all requested sources, including resumed sources, and prints a concise completed/total count after every committed source.
+启动时，采样器发现并验证已有完成标记，精确跳过这些源样本。进度条覆盖本次请求的全部样本（包括已恢复的样本），每提交一个样本后都输出简洁的“已完成/总数”信息。
 
-When the loop finishes, it merges shards ordered by source id and emits the existing top-level files (`cfs.csv`, `cf_latents.csv`, projection and post-hoc summaries, `sampling_diagnostics.csv`, and downstream summaries) with their current schemas.  No downstream evaluator reads partial checkpoints.  Existing completed result directories without checkpoints remain readable as final results; resume behavior is used only for new or incomplete checkpointed runs.
+循环结束后，系统按源样本 id 合并分片，并生成现有的顶层文件：`cfs.csv`、`cf_latents.csv`、投影与后处理汇总、`sampling_diagnostics.csv` 及其下游汇总文件，保持现有格式不变。评估模块不会读取未完成的检查点。没有检查点但已完整结束的历史结果目录仍作为最终结果正常读取；恢复逻辑仅用于新的或未完成的检查点运行。
 
-## Error Handling
+## 异常处理
 
-Malformed, missing, or inconsistent checkpoint markers are ignored rather than trusted, causing the corresponding source to be recomputed.  Empty successful sources still receive a marker and contribute their zero-valued counters to final diagnostics.
+格式错误、缺失或内容不一致的完成标记均不被信任，对应样本会重新计算。即使某个成功完成的样本没有产生有效反事实，也会写入完成标记，并将其零值统计量计入最终诊断。
 
-## Tests
+## 测试
 
-Unit tests cover atomic CSV/JSON shard persistence, marker discovery, rejection of malformed markers, source-id ordering during merge, and reconstruction of aggregate diagnostics from per-source counters.  Existing actionability and evaluation tests remain unchanged.
+单元测试覆盖 CSV/JSON 分片的原子持久化、完成标记发现、格式错误标记的拒绝、按源样本 id 的有序合并，以及由逐样本统计量重建总诊断。现有的可行动性和评估测试保持不变。
 
-## Non-Goals
+## 非目标
 
-This change does not checkpoint optimization iterations, Adam state, models, or black-box training.  It does not alter experiment hyperparameters or rerun historical outputs.
+本改动不保存优化迭代、Adam 状态、模型参数或黑盒训练状态；不改变实验超参数；也不重跑历史结果。
