@@ -61,7 +61,8 @@ baselines/**/*.pth
 baselines/**/*.pt
 baselines/**/*.pkl
 
-# Experiment outputs; curated release summaries belong outside results
+# Experiment outputs and local publication snapshots
+/release/
 /results/
 /logs/
 /tmp/
@@ -120,12 +121,8 @@ baselines/**/*.pkl
 # Publish only maintained entry points and formal reproducibility helpers
 /scripts/*
 !/scripts/__init__.py
-!/scripts/audit_final_paper_results.py
-!/scripts/audit_git_release.py
 !/scripts/check_environment.py
 !/scripts/collect_evaluation_summaries.py
-!/scripts/export_environment.py
-!/scripts/prepare_release_summaries.py
 !/scripts/run_final_baselines.ps1
 !/scripts/run_final_main_ablations.ps1
 !/scripts/run_quickstart.ps1
@@ -133,6 +130,7 @@ baselines/**/*.pkl
 !/scripts/summarize_multiseed_ablations.py
 
 # Tests for excluded local-only exploratory scripts
+/tests/test_release_files.py
 /tests/test_experiment_scripts.py
 /tests/test_generation_strategy_probe.py
 /tests/test_lof_budget_probe.py

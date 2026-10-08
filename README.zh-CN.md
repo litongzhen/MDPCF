@@ -60,7 +60,7 @@ GPU 环境用 `-Gpu 0`。安装流程检查可以用 `-Epochs 20`，但其效果
 
 这是 5 数据集 × 3 表示变体 × 3 seed，共 45 项，不是快速测试。变体为 CSVAE-Transformer、参数量匹配的 CSVAE-MLP、Transformer-standard-VAE；固定黑盒 seed=42，正式源为 100 个共同 eligible sources，K=10、M=50、max_iter=3000。Adult/Bank/Lending Club 目标类为 1，Default/GMC 为 0。各数据集参数由 runner 定义。
 
-正式指标与配置的轻量副本位于 `release/summaries/` 和 `release/configs/`，不是原始反事实或可直接加载的模型。
+正式 runner 及其汇总脚本保留在仓库中，运行后会生成指标汇总和配置记录。已有结果、环境快照、论文材料、原始数据及预训练模型不上传，需要在本地准备数据并运行生成。
 
 ## 6. 可选 baseline
 

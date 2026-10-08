@@ -51,10 +51,9 @@ python scripts/check_environment.py
 ```
 
 `requirements.txt` pins direct dependencies to the observed research versions.
-`release/environment-reference.json` records the complete observed package
-versions without local paths. It is a diagnostic snapshot, not an installation
-lock: transitive dependencies, OS, drivers, hardware and numerical kernels can
-still differ. Fresh isolated installation has not yet been validated.
+This is not a complete environment lock: transitive dependencies, OS, drivers,
+hardware and numerical kernels can still differ. Fresh isolated installation
+has not yet been validated.
 
 ## Optional Baselines
 
@@ -185,9 +184,9 @@ Run the baseline queue after the main queue has prepared the fixed classifiers.
 These are long research jobs, not quick installation tests. Final dataset-specific
 settings are defined in the runners. Small tuning probes are exploratory and are
 not substitutes for the formal three-seed results.
-Curated metric summaries and sanitized run configurations are under `release/`;
-raw counterfactuals and pretrained checkpoints are not included in the default
-source release.
+The runners generate their own summaries and run configurations. Existing
+results, environment snapshots, raw datasets and pretrained checkpoints are
+not included; download/prepare the data and run the experiments locally.
 
 ## Tests
 
