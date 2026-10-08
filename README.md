@@ -205,10 +205,14 @@ dependencies. Some tests require optional baseline packages.
 - `mdpcf/csvae/`, `mdpcf/sample.py`: representation learning and generation.
 - `mdpcf/checkpoints.py`: resumable source checkpoints.
 - `evaluation_framework/`: shared metrics.
-- `scripts/`, `tests/`: reproducible runners and first-party regression tests.
+- `scripts/`, `tests/`: maintained quickstart/formal runners and first-party regression tests.
 - `baselines/`: adapted third-party implementations; retain their notices.
 - The manuscript draft is kept locally and is not included in this code release.
-- `docs/GITHUB_RELEASE.md`: publication checklist.
+
+Internal planning/navigation documents, retired tuning scripts and obsolete
+visualization scripts are not part of this release. The `.gitignore` uses an
+explicit allowlist for maintained scripts; new public scripts must be added to
+that allowlist before committing them.
 
 ## Acknowledgments and Licensing
 

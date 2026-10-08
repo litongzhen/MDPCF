@@ -55,7 +55,10 @@ def main():
         name = PurePosixPath(path).name.lower()
         if mode == "160000" or name in {".env", "kaggle.json", "credentials.json", "id_ed25519", "id_rsa"}:
             forbidden.append(path)
-        if path.startswith(("results/", "logs/", "tmp/", ".venv/", "Mathematics/")):
+        if path.startswith(("results/", "logs/", "tmp/", ".venv/", "Mathematics/", "docs/")):
+            forbidden.append(path)
+        if path in {"PROJECT_GUIDE.md", "阅读顺序.md", "AGENTS.md", "feature_usage_plot.py",
+                    "lamda_loss_plot_all.py", "shapley.py"}:
             forbidden.append(path)
         if PurePosixPath(path).suffix.lower() in {".pkl", ".pt", ".pth", ".npy", ".zip"}:
             forbidden.append(path)

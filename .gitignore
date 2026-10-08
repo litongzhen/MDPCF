@@ -105,3 +105,46 @@ baselines/**/*.pkl
 /baselines/tabcf_original/
 /baselines/dice/DiCE-official/docs/
 /baselines/dice/DiCE-official/.github/
+
+# Local navigation notes and internal publication/research planning
+/AGENTS.md
+/PROJECT_GUIDE.md
+/阅读顺序.md
+/docs/
+
+# Legacy plots target obsolete TABCF paths, not the published MDPCE protocol
+/feature_usage_plot.py
+/lamda_loss_plot_all.py
+/shapley.py
+
+# Publish only maintained entry points and formal reproducibility helpers
+/scripts/*
+!/scripts/__init__.py
+!/scripts/audit_final_paper_results.py
+!/scripts/audit_git_release.py
+!/scripts/check_environment.py
+!/scripts/collect_evaluation_summaries.py
+!/scripts/export_environment.py
+!/scripts/prepare_release_summaries.py
+!/scripts/run_final_baselines.ps1
+!/scripts/run_final_main_ablations.ps1
+!/scripts/run_quickstart.ps1
+!/scripts/setup_environment.ps1
+!/scripts/summarize_multiseed_ablations.py
+
+# Tests for excluded local-only exploratory scripts
+/tests/test_experiment_scripts.py
+/tests/test_generation_strategy_probe.py
+/tests/test_lof_budget_probe.py
+/tests/test_lr_beta_cross_dataset_summary.py
+/tests/test_lr_beta_multiseed_summary.py
+/tests/test_lr_beta_probe_summary.py
+/tests/test_pareto_selection.py
+/tests/test_search_parameter_probe.py
+
+# Upstream docs, demos and CI are not runtime dependencies
+/baselines/CARLA/docs/
+/baselines/CARLA/experiments/
+/baselines/CARLA/images/
+/baselines/CARLA/test/
+/baselines/CARLA/.github/
