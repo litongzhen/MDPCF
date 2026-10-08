@@ -149,6 +149,5 @@ def wachter_recourse(
             log.info("Timeout - No Counterfactual Explanation Found")
             break
         elif f_x_new >= 0.5:
-            pass
-            # log.info("Counterfactual Explanation Found")
+            log.info("Counterfactual Explanation Found")
     return x_new_enc.cpu().detach().numpy().squeeze(axis=0)

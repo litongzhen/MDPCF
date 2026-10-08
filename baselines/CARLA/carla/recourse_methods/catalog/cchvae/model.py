@@ -15,10 +15,6 @@ from carla.recourse_methods.processing import (
     reconstruct_encoding_constraints,
 )
 
-from tqdm import tqdm
-
-# Enable the tqdm progress bar for pandas
-tqdm.pandas()
 
 class CCHVAE(RecourseMethod):
     """
@@ -95,7 +91,7 @@ class CCHVAE(RecourseMethod):
         },
     }
 
-    def __init__(self, mlmodel: MLModel, hyperparams: Dict = None, data_test = None) -> None:
+    def __init__(self, mlmodel: MLModel, hyperparams: Dict = None) -> None:
 
         supported_backends = ["pytorch"]
         if mlmodel.backend not in supported_backends:
@@ -113,11 +109,6 @@ class CCHVAE(RecourseMethod):
         self._clamp = self._params["clamp"]
 
         vae_params = self._params["vae_params"]
-        self.categorical_feature_indexes = hyperparams["categorical_feature_indexes"]
-        self.continuous_feature_indexes = hyperparams["continuous_feature_indexes"]
-        self.encoding_method = hyperparams["encoding_method"]
-        self.data_test = data_test
-
         self._generative_model = self._load_vae(
             self._mlmodel.data.df, vae_params, self._mlmodel, self._params["data_name"]
         )
@@ -127,32 +118,21 @@ class CCHVAE(RecourseMethod):
     ) -> VariationalAutoencoder:
 
         generative_model = VariationalAutoencoder(
-            data_name, vae_params["layers"], mlmodel.get_mutable_mask(), continuous_feature_indexes=self.continuous_feature_indexes, categorical_feature_indexes=self.categorical_feature_indexes,
-            encoding_method=self.encoding_method
+            data_name, vae_params["layers"], mlmodel.get_mutable_mask()
         )
-        if vae_params["train"] and not generative_model.trained_exists(data.shape[1] - 1, vae_params["epochs"]):
-            if self.data_test is not None:
-                generative_model.fit(
-                    xtrain=data[mlmodel.feature_input_order],
-                    kl_weight=vae_params["kl_weight"],
-                    lambda_reg=vae_params["lambda_reg"],
-                    epochs=vae_params["epochs"],
-                    lr=vae_params["lr"],
-                    batch_size=vae_params["batch_size"],
-                    x_test=self.data_test.df[mlmodel.feature_input_order],
-                )
-            else:
-                generative_model.fit(
-                    xtrain=data[mlmodel.feature_input_order],
-                    kl_weight=vae_params["kl_weight"],
-                    lambda_reg=vae_params["lambda_reg"],
-                    epochs=vae_params["epochs"],
-                    lr=vae_params["lr"],
-                    batch_size=vae_params["batch_size"],
-                )
+
+        if vae_params["train"]:
+            generative_model.fit(
+                xtrain=data[mlmodel.feature_input_order],
+                kl_weight=vae_params["kl_weight"],
+                lambda_reg=vae_params["lambda_reg"],
+                epochs=vae_params["epochs"],
+                lr=vae_params["lr"],
+                batch_size=vae_params["batch_size"],
+            )
         else:
             try:
-                generative_model.load(data.shape[1] - 1, vae_params["epochs"])
+                generative_model.load(vae_params["layers"][0])
             except FileNotFoundError as exc:
                 raise FileNotFoundError(
                     "Loading of Autoencoder failed. {}".format(str(exc))
@@ -236,7 +216,7 @@ class CCHVAE(RecourseMethod):
             x_ce = temp
 
             x_ce = reconstruct_encoding_constraints(
-                x_ce, cat_features_indices, self._params["binary_cat_features"], categorical_feature_indexes = self.categorical_feature_indexes
+                x_ce, cat_features_indices, self._params["binary_cat_features"]
             )
             x_ce = x_ce.detach().cpu().numpy()
             x_ce = x_ce.clip(0, 1) if self._clamp else x_ce
@@ -253,7 +233,7 @@ class CCHVAE(RecourseMethod):
 
             # counterfactual labels
             y_candidate = np.argmax(
-                self._mlmodel.predict_proba(torch.from_numpy(x_ce).to(device).float())
+                self._mlmodel.predict_proba(torch.from_numpy(x_ce).float())
                 .cpu()
                 .detach()
                 .numpy(),
@@ -275,14 +255,14 @@ class CCHVAE(RecourseMethod):
     def get_counterfactuals(self, factuals: pd.DataFrame) -> pd.DataFrame:
         factuals = self._mlmodel.get_ordered_features(factuals)
 
-        encoded_feature_names = self._mlmodel.data.encoder.get_feature_names_out(
+        encoded_feature_names = self._mlmodel.data.encoder.get_feature_names(
             self._mlmodel.data.categorical
         )
         cat_features_indices = [
             factuals.columns.get_loc(feature) for feature in encoded_feature_names
         ]
 
-        df_cfs = factuals.progress_apply(
+        df_cfs = factuals.apply(
             lambda x: self._counterfactual_search(
                 self._step, x.reshape((1, -1)), cat_features_indices
             ),
@@ -290,6 +270,12 @@ class CCHVAE(RecourseMethod):
             axis=1,
         )
 
-        df_cfs = check_counterfactuals(self._mlmodel, df_cfs, factuals.index)
+        source_label = np.argmax(self._mlmodel.predict_proba(factuals), axis=1)
+        df_cfs = check_counterfactuals(
+            self._mlmodel,
+            df_cfs,
+            factuals.index,
+            negative_label=source_label,
+        )
         df_cfs = self._mlmodel.get_ordered_features(df_cfs)
         return df_cfs

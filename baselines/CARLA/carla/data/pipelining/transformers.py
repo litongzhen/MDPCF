@@ -17,12 +17,6 @@ def fit_scaler(scaling_method, df):
     sklearn.base.BaseEstimator
 
     """
-    if df.empty:
-        fitted_scaler = preprocessing.FunctionTransformer(
-                func=None, inverse_func=None
-        )
-        return fitted_scaler
-
     if isinstance(scaling_method, str):
         if scaling_method == "MinMax":
             fitted_scaler = preprocessing.MinMaxScaler().fit(df)
@@ -58,11 +52,11 @@ def fit_encoder(encoding_method, df):
     if isinstance(encoding_method, str):
         if encoding_method == "OneHot":
             fitted_encoder = preprocessing.OneHotEncoder(
-                handle_unknown="error", sparse_output=False
+                handle_unknown="error", sparse=False
             ).fit(df)
         elif encoding_method == "OneHot_drop_binary":
             fitted_encoder = preprocessing.OneHotEncoder(
-                drop="if_binary", handle_unknown="error", sparse_output=False
+                drop="if_binary", handle_unknown="error", sparse=False
             ).fit(df)
         elif encoding_method is None or "Identity":
             fitted_encoder = preprocessing.FunctionTransformer(

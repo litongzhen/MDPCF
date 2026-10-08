@@ -9,10 +9,7 @@ from carla.recourse_methods.processing import (
     check_counterfactuals,
     merge_default_parameters,
 )
-from tqdm import tqdm
 
-# Enable the tqdm progress bar for pandas
-tqdm.pandas()
 
 class CRUD(RecourseMethod):
     """
@@ -86,7 +83,7 @@ class CRUD(RecourseMethod):
         },
     }
 
-    def __init__(self, mlmodel, hyperparams: Dict = None, data_test=None):
+    def __init__(self, mlmodel, hyperparams: Dict = None):
 
         supported_backends = ["pytorch"]
         if mlmodel.backend not in supported_backends:
@@ -108,38 +105,24 @@ class CRUD(RecourseMethod):
         self._binary_cat_features = checked_hyperparams["binary_cat_features"]
 
         vae_params = checked_hyperparams["vae_params"]
-
-        self.negative_class = hyperparams["negative_class"]
-        self.target_class = hyperparams["target_class"]
-        self.categorical_feature_indexes = hyperparams["categorical_feature_indexes"]
-
-        
-
-
         self._csvae = CSVAE(
             checked_hyperparams["data_name"],
             vae_params["layers"],
             mlmodel.get_mutable_mask(),
         )
 
-        if vae_params["train"] and not self._csvae.trained_exists(epochs=vae_params["epochs"]):
-
-            in_df = mlmodel.data.df[mlmodel.feature_input_order + [mlmodel.data.target]]
-
-            in_df[mlmodel.data.target] = in_df[mlmodel.data.target].map({self.target_class: 1, self.negative_class: 0})
-
-            print("Train data shape", in_df.shape)
+        if vae_params["train"]:
             self._csvae.fit(
-                data=in_df,
+                data=mlmodel.data.df[
+                    mlmodel.feature_input_order + [mlmodel.data.target]
+                ],
                 epochs=vae_params["epochs"],
                 lr=vae_params["lr"],
                 batch_size=vae_params["batch_size"],
             )
-
-            self._csvae.save()
         else:
             try:
-                self._csvae.load(vae_params["epochs"])
+                self._csvae.load(self._mlmodel.data.df.shape[1] - 1)
             except FileNotFoundError as exc:
                 raise FileNotFoundError(
                     "Loading of Autoencoder failed. {}".format(str(exc))
@@ -155,31 +138,26 @@ class CRUD(RecourseMethod):
             axis=1,
         )
 
-        factuals[self._mlmodel.data.target] = factuals[self._mlmodel.data.target].map({self.target_class: 1, self.negative_class: 0})
-
-
         # pay attention to categorical features
-        encoded_feature_names = self._mlmodel.data.encoder.get_feature_names_out(
+        encoded_feature_names = self._mlmodel.data.encoder.get_feature_names(
             self._mlmodel.data.categorical
         )
         cat_features_indices = [
             factuals.columns.get_loc(feature) for feature in encoded_feature_names
         ]
 
-
-        df_cfs = factuals.progress_apply(
+        df_cfs = factuals.apply(
             lambda x: counterfactual_search(
                 self._mlmodel,
                 self._csvae,
                 x.reshape((1, -1)),
                 cat_features_indices,
                 self._binary_cat_features,
-                None,
+                self._target_class,
                 self._lambda_param,
                 self._optimizer,
                 self._lr,
                 self._max_iter,
-                categorical_feature_indexes=self.categorical_feature_indexes
             ),
             raw=True,
             axis=1,

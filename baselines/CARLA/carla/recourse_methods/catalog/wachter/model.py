@@ -8,10 +8,7 @@ from carla.recourse_methods.processing import (
     check_counterfactuals,
     merge_default_parameters,
 )
-from tqdm import tqdm
 
-# Enable the tqdm progress bar for pandas
-tqdm.pandas()
 
 class Wachter(RecourseMethod):
     """
@@ -100,14 +97,14 @@ class Wachter(RecourseMethod):
     def get_counterfactuals(self, factuals: pd.DataFrame) -> pd.DataFrame:
         factuals = self._mlmodel.get_ordered_features(factuals)
 
-        encoded_feature_names = self._mlmodel.data.encoder.get_feature_names_out(
+        encoded_feature_names = self._mlmodel.data.encoder.get_feature_names(
             self._mlmodel.data.categorical
         )
         cat_features_indices = [
             factuals.columns.get_loc(feature) for feature in encoded_feature_names
         ]
 
-        df_cfs = factuals.progress_apply(
+        df_cfs = factuals.apply(
             lambda x: wachter_recourse(
                 self._mlmodel.raw_model,
                 x.reshape((1, -1)),
@@ -127,6 +124,15 @@ class Wachter(RecourseMethod):
             axis=1,
         )
 
-        df_cfs = check_counterfactuals(self._mlmodel, df_cfs, factuals.index)
+        if self._loss_type == "BCE":
+            target_class = int(self._y_target[1] > self._y_target[0])
+        else:
+            target_class = int(self._y_target[0] > 0)
+        df_cfs = check_counterfactuals(
+            self._mlmodel,
+            df_cfs,
+            factuals.index,
+            negative_label=1 - target_class,
+        )
         df_cfs = self._mlmodel.get_ordered_features(df_cfs)
         return df_cfs

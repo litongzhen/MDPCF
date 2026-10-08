@@ -52,6 +52,7 @@ htmlcov/
 
 # Vendored / external projects
 /DiCE-main/
+/TABCF-main/*
 # /baselines/CARLA/
 
 # Local model artifacts inside vendored baselines
@@ -59,3 +60,48 @@ baselines/**/sample_trained_models/
 baselines/**/*.pth
 baselines/**/*.pt
 baselines/**/*.pkl
+
+# Experiment outputs; curated release summaries belong outside results
+/results/
+/logs/
+/tmp/
+/baseline_*/
+/cf_*/
+/hparam_probe_*/
+
+# Credentials and machine-local settings
+.env
+.env.*
+!.env.example
+**/kaggle.json
+**/credentials.json
+*.pem
+*.key
+
+# Local reading materials / duplicate downloads, not runtime source trees
+/*.zip
+/*.pdf
+/*.docx
+/DiCoFlex-main/
+/DiCoFlex_openreview_supplementary/
+/MDPI_template_ACS/
+/HANDOFF.md
+/GENERATION_PROBE_PLAN_*.md
+
+# LaTeX intermediates; keep source, figures, and template files
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.out
+*.synctex.gz
+/Mathematics/template.pdf
+
+# Code-only first release: keep draft manuscript and unlicensed external trees local
+/Mathematics/
+/baselines/DiCoFlex-main/
+/baselines/TABCF-main/
+/baselines/tabcf_original/
+/baselines/dice/DiCE-official/docs/
+/baselines/dice/DiCE-official/.github/

@@ -4,7 +4,6 @@ import pandas as pd
 from urllib import request
 import shutil
 import zipfile
-import kaggle
 import gzip
 
 
@@ -59,6 +58,8 @@ def download_from_repo(name):
 
 
 def download_kaggle(name):
+    import kaggle
+
     print(f'Start processing dataset {name} from Kaggle.')
     save_dir = f'{DATA_DIR}/{name}'
     if not os.path.exists(save_dir):

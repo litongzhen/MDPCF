@@ -194,9 +194,6 @@ class CSVAE(nn.Module):
     def fit(self, data, epochs=100, lr=1e-3, batch_size=32):
         if isinstance(data, pd.DataFrame):
             data = data.values
-
-        self.epochs = epochs
-
         x_train = data[:, :-1]
 
         if self._labels_dim == 2:
@@ -267,32 +264,22 @@ class CSVAE(nn.Module):
 
         self.eval()
 
-
-    def trained_exists(self, epochs):
-        cache_path = get_home()
-
-        load_path = os.path.join(
-            cache_path,
-            "csvae_{}_{}.{}".format(self._data_name, self._input_dim, epochs, "pt"),
-        )
-        return os.path.isfile(load_path)
-    
     def save(self):
         cache_path = get_home()
 
         save_path = os.path.join(
             cache_path,
-            "csvae_{}_{}.{}".format(self._data_name, self._input_dim, self.epochs, "pt"),
+            "csvae_{}_{}.{}".format(self._data_name, self._input_dim, "pt"),
         )
 
         torch.save(self.state_dict(), save_path)
 
-    def load(self, epochs):
+    def load(self, input_shape):
         cache_path = get_home()
 
         load_path = os.path.join(
             cache_path,
-            "csvae_{}_{}.{}".format(self._data_name, self._input_dim, epochs, "pt"),
+            "csvae_{}_{}.{}".format(self._data_name, input_shape, "pt"),
         )
 
         self.load_state_dict(torch.load(load_path))

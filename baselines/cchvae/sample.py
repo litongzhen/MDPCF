@@ -1,5 +1,3 @@
-import dice_ml
-from dice_ml.utils import helpers # helper functions
 import torch
 import argparse
 import warnings
@@ -10,46 +8,49 @@ import torch.nn.functional as F
 from tqdm import tqdm
 from contextlib import redirect_stdout
 import io
-import sys
 
-from utils_train import preprocess, TabularDataset, get_name_form_args
+from utils_train import preprocess, TabularDataset, get_name_form_args, get_black_box_model_path, save_run_config
 
 from mdpcf.csvae.model import BBMLPCLF
 from mdpcf.latent_utils import get_input_generate, recover_data, split_num_cat_target
+from mdpcf.sample import select_source_indices
 import numpy as np
 import pandas as pd
 import os
 from torch.utils.data import DataLoader
-from dice_ml.utils import helpers
 
 warnings.filterwarnings('ignore')
 from raiutils.exceptions import UserConfigValidationException
-from carla.data.catalog import CsvCatalog, OnlineCatalog, TrainTestCsvCatalog
+from baselines.carla_compat import CARLA_ROOT, TrainTestCsvCatalog
+from baselines.carla_postprocess import project_encoded_categories
+from carla.data.catalog import CsvCatalog, OnlineCatalog
 from carla import MLModelCatalog
 
 from carla import MLModel
 from carla.recourse_methods import CCHVAE
 import yaml
 
+
 # Custom black-box models need to inherit from
 # the MLModel interface
 class MyOwnModel(MLModel):
-    def __init__(self, data, data_dir, info, input_shape=66, device="cpu", encoding_method="OneHot", hidden_dims=None):
+    def __init__(self, data, data_dir, info, input_shape=66, device="cpu", encoding_method="OneHot", hidden_dims=None, model_filename=None):
         super().__init__(data)
         # The constructor can be used to load or build an
         # arbitrary black-box-model
 
         if encoding_method=="OneHot":
             loaded_black_box_clf = BBMLPCLF(input_shape).to(device)
-            model_filename = f'{data_dir}/black_box_mlp.pkl'
-            if hidden_dims is not None:
-                model_filename = f'{data_dir}/black_box_mlp_hidden_{hidden_dims}.pkl'
+            if model_filename is None:
+                model_filename = f'{data_dir}/black_box_mlp.pkl'
+                if hidden_dims is not None:
+                    model_filename = f'{data_dir}/black_box_mlp_hidden_{hidden_dims}.pkl'
         else:
             input_shape = 64
             loaded_black_box_clf = BBMLPCLF(input_shape).to(device)
             model_filename = f'{data_dir}/black_box_mlp_ohe_drop_bin.pkl'
 
-        loaded_black_box_clf.load_state_dict(torch.load(model_filename))
+        loaded_black_box_clf.load_state_dict(torch.load(model_filename, map_location=device))
 
         self._mymodel = loaded_black_box_clf
         self._mymodel.eval()
@@ -78,16 +79,25 @@ class MyOwnModel(MLModel):
     # The predict function outputs
     # the continuous prediction of the model
     def predict(self, x):
-        return self._mymodel.predict(x)
+        return np.argmax(self.predict_proba(x), axis=1)
 
     # The predict_proba method outputs
     # the prediction as class probabilities
     def predict_proba(self, x):
+        return_tensor = torch.is_tensor(x)
         if isinstance(x, pd.DataFrame):
             x = torch.tensor(x.values).float().to(self.device)
-            return self._mymodel(x).detach().cpu().numpy()
+        elif torch.is_tensor(x):
+            x = x.float().to(self.device)
+        else:
+            x = torch.tensor(x).float().to(self.device)
 
-        return self._mymodel(x)
+        logits = self._mymodel(x)
+        probs = torch.softmax(logits, dim=1)
+
+        if return_tensor:
+            return probs
+        return probs.detach().cpu().numpy()
 
 def main(args):
     # ML_modelpath = helpers.get_adult_income_modelpath(backend="PYT")
@@ -129,15 +139,14 @@ def main(args):
         output_folder_name = f'{output_folder_name}/{num_samples}_samples'
     else:
         output_folder_name = f'{output_folder_name}/all_samples'
+    if args.total_CFs > 1:
+        output_folder_name = f'{output_folder_name}_CFs_{args.total_CFs}'
 
     save_path = os.path.join(save_path, output_folder_name)
 
     if not os.path.exists(save_path):
         os.makedirs(save_path)
-    else:
-        if os.listdir(save_path):
-            print("CFs for setting", output_folder_name, "already computed")
-            exit(0)
+    save_run_config(args, save_path)
 
 
     train_set_path = f'data/{dataname}/train.csv'
@@ -151,6 +160,10 @@ def main(args):
                         immutables=immutable,
                         target=info["target_col"],
                         encoding_method=encoding_method)
+    if hasattr(dataset.encoder, "get_feature_names_out") and not hasattr(
+        dataset.encoder, "get_feature_names"
+    ):
+        dataset.encoder.get_feature_names = dataset.encoder.get_feature_names_out
     
 
     test_df_encoded = dataset.df_test
@@ -161,7 +174,8 @@ def main(args):
 
     input_shape = X_num_cat_ohe[0].shape[-1]
 
-    model = MyOwnModel(dataset, data_dir, info, input_shape=input_shape, device=args.device, encoding_method=encoding_method, hidden_dims=hidden_dims)
+    model_filename = get_black_box_model_path(args, data_dir, cat_encoding="one-hot")
+    model = MyOwnModel(dataset, data_dir, info, input_shape=input_shape, device=args.device, encoding_method=encoding_method, hidden_dims=hidden_dims, model_filename=model_filename)
 
     with open("baselines/CARLA/experimental_setup.yaml", "r") as f:
         setup_catalog = yaml.safe_load(f)
@@ -212,14 +226,17 @@ def main(args):
 
 
 
-    column_names = info["column_names"]
+    column_names = info["column_names"].copy()
     target_col = info["target_col"]
     column_names.remove(target_col)
-    target_class_index = 1
+    target_class_index = int(args.target_class)
 
 
     test_preds = np.argmax(model.predict_proba(test_df_encoded.drop(target_col, axis=1)), axis=1)
-    indices_negative_class = np.where(test_preds != target_class_index)[0][:num_samples]
+    source_start = int(getattr(args, "source_start", 0))
+    indices_negative_class = select_source_indices(
+        test_preds, target_class_index, num_samples, source_start
+    )
     factuals = test_df_encoded.iloc[indices_negative_class]
 
 
@@ -276,24 +293,21 @@ def main(args):
     # pd.set_option('display.max_rows', None)
     # pd.set_option('display.max_columns', None)
 
-    counterfactuals_enc_found = counterfactuals_enc.dropna()
+    counterfactuals_enc_found = project_encoded_categories(counterfactuals_enc.dropna(), dataset)
 
     # print(counterfactuals_enc_found)
 
-    target_probs_final = model.predict_proba(counterfactuals_enc_found)[:, target_class_index]
-
-
-    counterfactuals_found = dataset.inverse_transform(counterfactuals_enc_found)
-
-
-
-    counterfactuals_found["target_prob"] = target_probs_final
-    counterfactuals_found["id"] = list(counterfactuals_enc_found.index)
-
-
     cols = ["id"] + column_names
 
-    syn_df = counterfactuals_found[cols + ["target_prob"]]
+    if counterfactuals_enc_found.empty:
+        print("No valid CCHVAE counterfactuals generated for current settings.")
+        syn_df = pd.DataFrame(columns=cols + ["target_prob"])
+    else:
+        target_probs_final = model.predict_proba(counterfactuals_enc_found)[:, target_class_index]
+        counterfactuals_found = dataset.inverse_transform(counterfactuals_enc_found)
+        counterfactuals_found["target_prob"] = target_probs_final
+        counterfactuals_found["id"] = list(counterfactuals_enc_found.index)
+        syn_df = counterfactuals_found[cols + ["target_prob"]]
 
     syn_df.to_csv(os.path.join(save_path, "cfs.csv"), index = False)
     

@@ -119,6 +119,7 @@ def main(args):
 
     device = args.device
     batch_size = 4096
+    num_epochs = args.black_box_epochs
 
     info_path = f"data/{dataname}/info.json"
 
@@ -159,7 +160,7 @@ def main(args):
         train_data_clf_ohe,
         batch_size=batch_size,
         shuffle=True,
-        num_workers=4,
+        num_workers=0,
     )
 
     test_data_clf_ohe = TabularDataset(
@@ -170,7 +171,7 @@ def main(args):
         test_data_clf_ohe,
         batch_size=batch_size,
         shuffle=True,
-        num_workers=4,
+        num_workers=0,
     )
 
     # ----------------------------------------------------------------------------
@@ -190,7 +191,7 @@ def main(args):
         train_loader_clf_ohe,
         test_loader=test_loader_clf_ohe,
         data_dir=data_dir,
-        num_epochs=100,
+        num_epochs=num_epochs,
         cat_encoding="one-hot",
         input_shape=X_train_num_cat_ohe.shape[-1],
         gumbel_softmax=gumbel_softmax,

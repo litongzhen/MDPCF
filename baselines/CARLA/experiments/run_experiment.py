@@ -16,7 +16,7 @@ from typing import Dict, Optional
 
 import numpy as np
 import yaml
-# from tensorflow import Graph, Session
+from tensorflow import Graph, Session
 
 import carla.evaluation.catalog as evaluation_catalog
 from carla.data.api import Data

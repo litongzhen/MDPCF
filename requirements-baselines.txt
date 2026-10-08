@@ -1,0 +1,14 @@
+-r requirements.txt
+kaggle==1.6.14
+raiutils==0.4.2
+imbalanced-learn==0.14.1
+nflows==0.14
+neptune==1.14.0.post2
+torchdiffeq==0.2.5
+tensorflow==2.20.0
+xgboost==1.4.2
+lime==0.2.0.1
+recourse==1.0.0
+mip==1.12.0
+causalgraphicalmodels==0.0.4
+# Install vendored DiCE/CARLA separately with --no-deps; see README.

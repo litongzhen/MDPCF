@@ -15,7 +15,6 @@ from carla.recourse_methods.processing.counterfactuals import (
     merge_default_parameters,
     reconstruct_encoding_constraints,
 )
-from tqdm import tqdm
 
 
 class Revise(RecourseMethod):
@@ -95,7 +94,7 @@ class Revise(RecourseMethod):
         },
     }
 
-    def __init__(self, mlmodel: MLModel, data: Data, hyperparams: Dict = None, data_test = None) -> None:
+    def __init__(self, mlmodel: MLModel, data: Data, hyperparams: Dict = None) -> None:
 
         supported_backends = ["pytorch"]
         if mlmodel.backend not in supported_backends:
@@ -115,37 +114,21 @@ class Revise(RecourseMethod):
         self._binary_cat_features = self._params["binary_cat_features"]
 
         vae_params = self._params["vae_params"]
-
-        self.categorical_feature_indexes = hyperparams["categorical_feature_indexes"]
-
         self.vae = VariationalAutoencoder(
-            self._params["data_name"], vae_params["layers"], mlmodel.get_mutable_mask(), continuous_feature_indexes=hyperparams["continuous_feature_indexes"], categorical_feature_indexes=hyperparams["categorical_feature_indexes"], 
-                       encoding_method=hyperparams["encoding_method"]
-        
+            self._params["data_name"], vae_params["layers"], mlmodel.get_mutable_mask()
         )
 
-        if vae_params["train"] and not self.vae.trained_exists(data.df.shape[1] - 1, vae_params["epochs"]):
-            if data_test is not None:
-                self.vae.fit(
-                    xtrain=data.df[mlmodel.feature_input_order],
-                    lambda_reg=vae_params["lambda_reg"],
-                    epochs=vae_params["epochs"],
-                    lr=vae_params["lr"],
-                    batch_size=vae_params["batch_size"],
-                    x_test=data_test.df[mlmodel.feature_input_order],
-                )
-            else:
-                self.vae.fit(
-                    xtrain=data.df[mlmodel.feature_input_order],
-                    lambda_reg=vae_params["lambda_reg"],
-                    epochs=vae_params["epochs"],
-                    lr=vae_params["lr"],
-                    batch_size=vae_params["batch_size"],
-                )
-            self.vae.save()
+        if vae_params["train"]:
+            self.vae.fit(
+                xtrain=data.df[mlmodel.feature_input_order],
+                lambda_reg=vae_params["lambda_reg"],
+                epochs=vae_params["epochs"],
+                lr=vae_params["lr"],
+                batch_size=vae_params["batch_size"],
+            )
         else:
             try:
-                self.vae.load(data.df.shape[1] - 1, vae_params["epochs"])
+                self.vae.load(data.df.shape[1] - 1)
             except FileNotFoundError as exc:
                 raise FileNotFoundError(
                     "Loading of Autoencoder failed. {}".format(str(exc))
@@ -157,7 +140,7 @@ class Revise(RecourseMethod):
         factuals = self._mlmodel.get_ordered_features(factuals)
 
         # pay attention to categorical features
-        encoded_feature_names = self._mlmodel.data.encoder.get_feature_names_out(
+        encoded_feature_names = self._mlmodel.data.encoder.get_feature_names(
             self._mlmodel.data.categorical
         )
         cat_features_indices = [
@@ -168,7 +151,13 @@ class Revise(RecourseMethod):
             cat_features_indices, device, factuals
         )
 
-        cf_df = check_counterfactuals(self._mlmodel, list_cfs, factuals.index)
+        target_class = int(np.argmax(np.asarray(self._target_class)))
+        cf_df = check_counterfactuals(
+            self._mlmodel,
+            list_cfs,
+            factuals.index,
+            negative_label=1 - target_class,
+        )
         cf_df = self._mlmodel.get_ordered_features(cf_df)
         return cf_df
 
@@ -179,8 +168,7 @@ class Revise(RecourseMethod):
         )
 
         list_cfs = []
-        for query_instance in tqdm(test_loader, total=len(test_loader), desc="CFs for test set"):
-        # for query_instance in test_loader:
+        for query_instance in test_loader:
             query_instance = query_instance.float().to(device)
 
             target = torch.FloatTensor(self._target_class).to(device)
@@ -207,8 +195,6 @@ class Revise(RecourseMethod):
             for idx in range(self._max_iter):
                 cf = self.vae.decode(z)
 
-                cf_orig = cf.clone()
-
                 # add the immutable features to the reconstruction
                 temp = query_instance.clone()
                 temp[:, self.vae.mutable_mask] = cf
@@ -225,13 +211,8 @@ class Revise(RecourseMethod):
                 all_loss.append(loss)
 
                 if predicted == target_prediction:
-
-                    cf_one_hot = reconstruct_encoding_constraints(
-                        cf_orig, cat_features_indices, self._params["binary_cat_features"], categorical_feature_indexes=self.categorical_feature_indexes
-                    )
-
                     candidate_counterfactuals.append(
-                        cf_one_hot.cpu().detach().numpy().squeeze(axis=0)
+                        cf.cpu().detach().numpy().squeeze(axis=0)
                     )
                     candidate_distances.append(loss.cpu().detach().numpy())
 
@@ -251,7 +232,6 @@ class Revise(RecourseMethod):
             else:
                 log.info("No counterfactual found")
                 list_cfs.append(query_instance.cpu().detach().numpy().squeeze(axis=0))
-
         return list_cfs
 
     def _compute_loss(self, cf_initialize, query_instance, target):

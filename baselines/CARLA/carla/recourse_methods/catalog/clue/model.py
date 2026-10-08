@@ -4,7 +4,6 @@ from typing import Dict
 import numpy as np
 import pandas as pd
 import torch
-from tqdm import tqdm
 
 from carla.data.api import Data
 from carla.models.api import MLModel
@@ -107,16 +106,11 @@ class Clue(RecourseMethod):
         self._categorical = self._mlmodel.data.categorical
         self._data = data
 
-        self.device = hyperparams["device"]
-
         # get input dimension
         # indicate dimensions of inputs -- input_dim_vec: (if binary = 2; if continuous = 1)
         input_dims_continuous = list(np.repeat(1, len(self._mlmodel.data.continuous)))
         input_dims_binary = list(np.repeat(1, len(self._mlmodel.data.categorical)))
-
-        # self._input_dimension = input_dims_continuous + input_dims_binary
-
-        self._input_dimension = list(np.repeat(1, self._mlmodel.input_shape)) # ohe
+        self._input_dimension = input_dims_continuous + input_dims_binary
 
         # load autoencoder
         self._vae = self._load_vae()
@@ -150,7 +144,6 @@ class Clue(RecourseMethod):
         # Authors say: 'For automatic explainer generation'
         flat_vae_bools = False
         cuda = torch.cuda.is_available()
-
         vae = VAE_gauss_cat_net(
             self._input_dimension,
             self._width,
@@ -196,8 +189,8 @@ class Clue(RecourseMethod):
 
         list_cfs = []
 
-        for index, row in tqdm(factuals.iterrows(), total=factuals.shape[0]):
-            counterfactual = vae_gradient_search(row.values, self._mlmodel, self._vae, device=self.device)
+        for index, row in factuals.iterrows():
+            counterfactual = vae_gradient_search(row.values, self._mlmodel, self._vae)
             list_cfs.append(counterfactual)
 
         # Convert output into correct format

@@ -72,7 +72,7 @@ def get_drop_columns_binary(categorical: List[str], columns: List[str]) -> List[
 
 
 def reconstruct_encoding_constraints(
-    x: torch.Tensor, feature_pos: List[int], binary_cat: bool, categorical_feature_indexes=None,
+    x: torch.Tensor, feature_pos: List[int], binary_cat: bool
 ) -> torch.Tensor:
     """
     Reconstructing one-hot-encoded data, such that its values are either 0 or 1,
@@ -92,16 +92,6 @@ def reconstruct_encoding_constraints(
     Tensor with reconstructed constraints
     """
     x_enc = x.clone()
-
-    if categorical_feature_indexes is not None:
-        for cat_idx in categorical_feature_indexes:
-            # Identify the maximum values
-            _, max_indices = torch.max(x_enc[:, cat_idx], dim=1)
-
-            # Create one-hot encoding using scatter
-            x_enc[:, cat_idx] = torch.zeros_like(x_enc[:, cat_idx]).scatter_(1, max_indices.unsqueeze(1), 1.0)
-        return x_enc
-    
 
     if binary_cat:
         for pos in feature_pos:

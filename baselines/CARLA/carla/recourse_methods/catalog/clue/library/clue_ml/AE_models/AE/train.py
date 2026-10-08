@@ -4,7 +4,7 @@ import time
 
 import torch.utils.data
 from numpy.random import normal
-# from torchvision.utils import make_grid
+from torchvision.utils import make_grid
 
 from carla.recourse_methods.catalog.clue.library.clue_ml.src.utils import *
 

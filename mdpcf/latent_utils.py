@@ -1,16 +1,105 @@
-import os
 import json
+import os
 import numpy as np
 import pandas as pd
 import torch
 from utils_train import preprocess, get_name_form_args
-from mdpcf.csvae.model import Decoder_model
+from mdpcf.csvae.model import (
+    ConditionalVAEDecoderModel,
+    Decoder_model,
+    StandardVAEDecoderModel,
+)
+
+LATENT_ARTIFACT_PROTOCOL = "cruds_aligned_v3"
+STANDARD_VAE_ARTIFACT_PROTOCOL = "standard_vae_v1"
+CONDITIONAL_VAE_ARTIFACT_PROTOCOL = "conditional_vae_v1"
+LATENT_ARTIFACT_METADATA = "latent_artifact_protocol.json"
 
 
-def load_test_latent_arrays(csvae_ckpt_dir):
+def validate_latent_artifact_protocol(
+    csvae_ckpt_dir,
+    latent_model="csvae",
+    w_structure=None,
+    w_dim=None,
+    token_dim=None,
+    latent_dim=None,
+):
+    metadata_path = os.path.join(csvae_ckpt_dir, LATENT_ARTIFACT_METADATA)
+    if not os.path.isfile(metadata_path):
+        raise RuntimeError(
+            f"Latent arrays lack the required {LATENT_ARTIFACT_PROTOCOL} protocol marker."
+        )
+    with open(metadata_path, "r") as handle:
+        metadata = json.load(handle)
+    expected_protocols = {
+        "csvae": LATENT_ARTIFACT_PROTOCOL,
+        "standard_vae": STANDARD_VAE_ARTIFACT_PROTOCOL,
+        "cvae": CONDITIONAL_VAE_ARTIFACT_PROTOCOL,
+    }
+    if latent_model not in expected_protocols:
+        raise ValueError(f"Unknown latent_model: {latent_model}")
+    expected = expected_protocols[latent_model]
+    if metadata.get("latent_artifact_protocol") != expected:
+        raise RuntimeError(
+            f"Latent arrays must use {expected}; found "
+            f"{metadata.get('latent_artifact_protocol', 'missing')}."
+        )
+    if latent_model == "csvae" and w_structure is not None:
+        if metadata.get("w_structure") != w_structure:
+            raise RuntimeError(
+                f"Latent arrays use w_structure={metadata.get('w_structure')}; "
+                f"expected {w_structure}."
+            )
+    if latent_model == "csvae" and w_dim is not None:
+        if int(metadata.get("w_dim", -1)) != int(w_dim):
+            raise RuntimeError(
+                f"Latent arrays use w_dim={metadata.get('w_dim')}; expected {w_dim}."
+            )
+    expected_token_dim = 4 if token_dim is None else int(token_dim)
+    expected_latent_dim = 4 if latent_dim is None else int(latent_dim)
+    actual_token_dim = int(metadata.get("token_dim", 4))
+    actual_latent_dim = int(metadata.get("latent_dim", 4))
+    if (actual_token_dim, actual_latent_dim) != (
+        expected_token_dim,
+        expected_latent_dim,
+    ):
+        raise RuntimeError(
+            "Latent arrays use dimensions "
+            f"token={actual_token_dim}, z={actual_latent_dim}; expected "
+            f"token={expected_token_dim}, z={expected_latent_dim}."
+        )
+
+
+def load_test_latent_arrays(
+    csvae_ckpt_dir, latent_model="csvae", w_structure=None, w_dim=None,
+    token_dim=None, latent_dim=None,
+):
+    validate_latent_artifact_protocol(
+        csvae_ckpt_dir, latent_model, w_structure=w_structure, w_dim=w_dim,
+        token_dim=token_dim, latent_dim=latent_dim,
+    )
     test_z = torch.tensor(np.load(os.path.join(csvae_ckpt_dir, "test_z.npy"))).float()
-    test_w = torch.tensor(np.load(os.path.join(csvae_ckpt_dir, "test_w.npy"))).float()
+    if latent_model in {"standard_vae", "cvae"}:
+        test_w = torch.zeros_like(test_z)
+    else:
+        test_w = torch.tensor(np.load(os.path.join(csvae_ckpt_dir, "test_w.npy"))).float()
     return test_z, test_w
+
+
+def load_train_latent_arrays(
+    csvae_ckpt_dir, latent_model="csvae", w_structure=None, w_dim=None,
+    token_dim=None, latent_dim=None,
+):
+    validate_latent_artifact_protocol(
+        csvae_ckpt_dir, latent_model, w_structure=w_structure, w_dim=w_dim,
+        token_dim=token_dim, latent_dim=latent_dim,
+    )
+    train_z = torch.tensor(np.load(os.path.join(csvae_ckpt_dir, "train_z.npy"))).float()
+    if latent_model in {"standard_vae", "cvae"}:
+        train_w = torch.zeros_like(train_z)
+    else:
+        train_w = torch.tensor(np.load(os.path.join(csvae_ckpt_dir, "train_w.npy"))).float()
+    return train_z, train_w
 
 
 def get_input_generate(args):
@@ -21,6 +110,13 @@ def get_input_generate(args):
     sigmoid = args.sigmoid
     gumbel_softmax = args.gumbel_softmax
     tau = args.tau
+    csvae_backbone = getattr(args, "csvae_backbone", "transformer")
+    mlp_parameter_match = getattr(args, "mlp_parameter_match", False)
+    latent_model = getattr(args, "latent_model", "csvae")
+    w_structure = getattr(args, "w_structure", "global")
+    w_dim = getattr(args, "w_dim", 2)
+    token_dim = int(getattr(args, "token_dim", 4))
+    latent_dim = int(getattr(args, "latent_dim", 4))
 
     curr_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -44,29 +140,62 @@ def get_input_generate(args):
     )
 
     if args.method == "mdpcf":
-        test_z, test_w = load_test_latent_arrays(csvae_ckpt_dir)
+        train_z, train_w = load_train_latent_arrays(
+            csvae_ckpt_dir,
+            latent_model,
+            w_structure=w_structure,
+            w_dim=w_dim,
+            token_dim=token_dim,
+            latent_dim=latent_dim,
+        )
+        test_z, test_w = load_test_latent_arrays(
+            csvae_ckpt_dir,
+            latent_model,
+            w_structure=w_structure,
+            w_dim=w_dim,
+            token_dim=token_dim,
+            latent_dim=latent_dim,
+        )
 
-        pre_decoder = Decoder_model(
-            2,
-            d_numerical,
-            categories,
-            4,
-            n_head=1,
-            factor=32,
-            gumbel_softmax=gumbel_softmax,
-            sigmoid=sigmoid,
-            tau=tau,
+        decoder_classes = {
+            "csvae": Decoder_model,
+            "standard_vae": StandardVAEDecoderModel,
+            "cvae": ConditionalVAEDecoderModel,
+        }
+        decoder_class = decoder_classes[latent_model]
+        pre_decoder = decoder_class(
+            2, d_numerical, categories, token_dim, n_head=1, factor=32,
+            gumbel_softmax=gumbel_softmax, sigmoid=sigmoid, tau=tau,
+            backbone=csvae_backbone,
+            **(
+                {
+                    "dim_w": int(test_w.shape[-1]),
+                    "mlp_parameter_match": mlp_parameter_match,
+                }
+                if latent_model == "csvae"
+                else {}
+            ),
         )
 
         pre_decoder.load_state_dict(torch.load(decoder_save_path, map_location="cpu"))
 
         info["pre_decoder"] = pre_decoder
-        info["latent_dim"] = test_z.shape[-1]
-        info["w_dim"] = test_w.shape[-1]
+        info["latent_shape"] = list(test_z.shape[1:])
+        info["w_shape"] = list(test_w.shape[1:])
+        info["latent_dim"] = int(np.prod(test_z.shape[1:]))
+        info["w_dim"] = int(np.prod(test_w.shape[1:]))
 
         return {
+            "train_z": train_z,
+            "train_w": train_w,
             "test_z": test_z,
             "test_w": test_w,
+            "w_prior_mu": (
+                torch.tensor(np.load(os.path.join(csvae_ckpt_dir, "w_prior_mu.npy"))).float()
+                if latent_model == "csvae"
+                and os.path.isfile(os.path.join(csvae_ckpt_dir, "w_prior_mu.npy"))
+                else None
+            ),
             "info": info,
             "num_inverse": num_inverse,
             "cat_inverse": cat_inverse,
@@ -85,9 +214,10 @@ def get_input_generate(args):
 def split_num_cat_target(syn_data, info, num_inverse, cat_inverse, device):
     pre_decoder = info["pre_decoder"].to(device)
     z_dim = info["latent_dim"]
+    w_dim = info["w_dim"]
     syn_tensor = torch.tensor(syn_data, dtype=torch.float32).to(device)
     z = syn_tensor[:, :z_dim]
-    w = syn_tensor[:, z_dim:]
+    w = syn_tensor[:, z_dim : z_dim + w_dim]
     norm_input = pre_decoder(z, w)
     x_hat_num, x_hat_cat = norm_input
 

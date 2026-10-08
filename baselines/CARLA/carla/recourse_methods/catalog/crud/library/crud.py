@@ -31,7 +31,6 @@ def counterfactual_search(
     optimizer: str = "RMSprop",
     lr: float = 0.008,
     max_iter: int = 2000,
-    categorical_feature_indexes=None,
 ) -> np.ndarray:
     device = "cuda" if torch.cuda.is_available() else "cpu"
     if target_class is None:
@@ -78,7 +77,7 @@ def counterfactual_search(
         cf = temp
 
         cf = reconstruct_encoding_constraints(
-            cf, cat_feature_indices, binary_cat_features, categorical_feature_indexes=categorical_feature_indexes
+            cf, cat_feature_indices, binary_cat_features
         ).to(device)
         output = mlmodel.predict_proba(cf)
         _, predicted = torch.max(output[0], 0)
@@ -100,7 +99,6 @@ def counterfactual_search(
     if not len(counterfactuals):
         # if no counterfactual is present, returing the last candidate
         log.debug("No counterfactual found")
-        print("No counterfactual found")
         output = mlmodel.predict_proba(cf)
         _, predicted = torch.max(output[0], 0)
         return (

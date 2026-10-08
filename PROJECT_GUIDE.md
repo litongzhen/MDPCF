@@ -8,8 +8,8 @@
 
 1. 训练 CSVAE
 2. 把输入编码成潜变量 `z` 和 `w`
-3. 生成反事实时固定 `w = w0`
-4. 只在 `z` 空间里优化
+3. 生成反事实时固定源样本的 `z = z0`
+4. 在类别相关的 `w` 空间里优化多个候选
 5. 用多方向初始化 + 多样性损失，让多个反事实尽量分散
 
 baseline 还保留着，不改它们的逻辑。
@@ -25,7 +25,7 @@ baseline 还保留着，不改它们的逻辑。
 - `process_dataset.py`：数据预处理
 - `evaluation_framework/evaluate.py`：统一评估
 - `PROJECT_GUIDE.md`：这份说明
-- `README.md`：原始英文说明
+- `README.md`：最新环境安装、运行和正式协议说明
 
 ### `mdpcf/`
 
@@ -79,7 +79,7 @@ pip install -r requirements.txt
 
 ```bash
 python download_dataset.py
-python process_dataset.py
+python process_dataset.py --dataname adult
 ```
 
 训练 CSVAE：
@@ -146,14 +146,14 @@ python main.py --dataname adult --method mdpcf --mode evaluate --num_samples 2 -
 
 `mdpcf/csvae/model.py` 里现在主链路是 CSVAE。
 
-- `z`：和 label 相关的潜变量
-- `w`：保留样本其他因素
+- `z`：通过标签对抗项训练的非标签分支；不声称已经证明统计独立
+- `w`：类别条件后验和先验下的标签相关分支
 
 解码时用 `(z, w)` 一起重建输入。
 
-### 2. 固定 `w`
+### 2. 固定 `z`
 
-反事实生成时固定原样本的 `w0`，只优化 `z`。
+反事实生成时固定原样本的 `z0`，只优化 `w`。
 
 这让反事实变化更集中在决策相关因素上。
 
@@ -183,7 +183,8 @@ counterfactual_results/<dataname>/...
 
 ```bash
 python download_dataset.py
-python process_dataset.py
+python process_dataset.py --dataname adult
+python main.py --dataname adult --method black_box --mode train --gpu 0
 python main.py --dataname adult --method csvae --mode train --gpu 0
 python main.py --dataname adult --method mdpcf --mode sample --gpu 0 --num_samples 2 --total_CFs 4
 python main.py --dataname adult --method mdpcf --mode evaluate --gpu 0 --num_samples 2 --total_CFs 4

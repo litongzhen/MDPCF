@@ -16,16 +16,21 @@ def get_name_form_args(args):
         str: 由核心参数拼接而成的短文件名字符串
 
     示例输出:
-        "num[minmax]_loss[L2]_csvae_gs[t1.0]_cont[sigmoid]"
+        "num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]"
     """
     short_num_encoding = args.num_encoding.replace("_torch", "").replace(
         "min_max", "minmax"
     )
+    latent_model = getattr(args, "latent_model", "csvae")
+    csvae_backbone = getattr(args, "csvae_backbone", "transformer")
     opts_csvae = [
         f"num[{short_num_encoding}]",
         f"loss[{args.num_reconstr_loss}]",
-        "csvae",
+        latent_model,
+        "tokdec",
     ]
+    if csvae_backbone != "transformer":
+        opts_csvae.append(f"bb[{csvae_backbone}]")
 
     if args.kl_weight > 0:
         opts_csvae.append(f"kl[{args.kl_weight}]")
@@ -34,6 +39,15 @@ def get_name_form_args(args):
         opts_csvae.append(f"gs[t{args.tau}]")
 
     opts_csvae.append("cont[sigmoid]" if args.sigmoid else "cont[linear]")
+
+    token_dim = int(getattr(args, "token_dim", 4))
+    latent_dim = int(getattr(args, "latent_dim", 4))
+    if (token_dim, latent_dim) != (4, 4):
+        opts_csvae.append(f"dim[t{token_dim}_z{latent_dim}]")
+
+    run_tag = getattr(args, "run_tag", "")
+    if run_tag:
+        opts_csvae.extend([f"run[{run_tag}]", f"seed[{args.seed}]"])
 
     return "_".join(opts_csvae)
 
@@ -60,7 +74,13 @@ def get_black_box_model_path(
         gumbel_softmax = getattr(args, "gumbel_softmax", gumbel_softmax)
 
     if hidden_dims is not None:
-        return os.path.join(data_dir, f"black_box_mlp_hidden_{hidden_dims}.pkl")
+        base_name = f"black_box_mlp_hidden_{hidden_dims}"
+        run_tag = getattr(args, "run_tag", "") if args is not None else ""
+        if run_tag:
+            black_box_seed = getattr(args, "black_box_seed", None)
+            artifact_seed = args.seed if black_box_seed is None else black_box_seed
+            base_name = f"{base_name}_run[{run_tag}]_seed[{artifact_seed}]"
+        return os.path.join(data_dir, f"{base_name}.pkl")
     if cat_encoding == "one-hot-drop-bin":
         return os.path.join(data_dir, "black_box_mlp_ohe_drop_bin.pkl")
     if gumbel_softmax is False:
@@ -85,39 +105,85 @@ def get_optim_params_form_args(args):
         - plausibility_weight_latent: 合理性权重（反事实样本的可信度）
         - immutable: 不可变特征（如年龄、种族等不应改变的特征）
     """
+    run_tag = getattr(args, "run_tag", "")
+    if run_tag:
+        # Seeded sweeps retain the full configuration in config.json and use a
+        # short directory component to remain below Windows path-length limits.
+        return f"run[{run_tag}]_seed[{args.seed}]"
+
     # 基础参数：输入空间邻近性权重
-    optimization_parameters = f"proximity_weight_input[{args.proximity_weight_input}]"
+    optimization_parameters = f"prox_x_w[{args.proximity_weight_input}]"
 
     # 可选参数：多样性权重（用于生成多样化的反事实解释）
     if hasattr(args, "diversity_weight"):
         optimization_parameters = (
-            f"{optimization_parameters}_diversity_weight[{args.diversity_weight}]"
+            f"{optimization_parameters}_div_w[{args.diversity_weight}]"
+        )
+
+    if getattr(args, "diversity_loss", "average_distance") != "average_distance":
+        optimization_parameters = (
+            f"{optimization_parameters}_div_loss[{args.diversity_loss}]"
         )
 
     # 可选参数：潜在空间初始化半径
     if hasattr(args, "latent_init_radius"):
-        optimization_parameters = (
-            f"{optimization_parameters}_latent_init_radius[{args.latent_init_radius}]"
-        )
+        latent_radius_strategy = getattr(args, "latent_init_radius_strategy", "fixed")
+        if latent_radius_strategy == "auto_nn":
+            optimization_parameters = (
+                f"{optimization_parameters}_zinit[auto_nn]"
+                f"_zscale[{getattr(args, 'latent_init_radius_scale', 1.0)}]"
+            )
+        else:
+            optimization_parameters = (
+                f"{optimization_parameters}_zinit[{args.latent_init_radius}]"
+            )
 
     # 可选参数：隐藏层维度
     if args.hidden_dims is not None:
-        optimization_parameters = f"{optimization_parameters}_hidden_dims[{args.hidden_dims}]"
+        optimization_parameters = f"{optimization_parameters}_h[{args.hidden_dims}]"
 
     # 非DiCE方法的特有参数
     if args.method != "dice":
 
         # 潜在空间邻近性权重和损失类型
         if args.proximity_weight_latent > 0:
-            optimization_parameters = f"{optimization_parameters}_proximity_weight_latent[{args.proximity_weight_latent}]_proximity_latent_loss[{args.proximity_latent_loss}]"
+            optimization_parameters = f"{optimization_parameters}_prox_z_w[{args.proximity_weight_latent}]_prox_z_loss[{args.proximity_latent_loss}]"
 
         # 合理性权重和损失类型（确保反事实样本在数据分布内）
         if args.plausibility_weight_latent > 0:
-            optimization_parameters = f"{optimization_parameters}_plausibility_weight_latent[{args.plausibility_weight_latent}]_plausibility_latent_loss[{args.plausibility_latent_loss}]"
+            optimization_parameters = f"{optimization_parameters}_plaus_z_w[{args.plausibility_weight_latent}]_plaus_z_loss[{args.plausibility_latent_loss}]"
 
         # 输入空间邻近性损失类型
         if args.proximity_input_loss is not None:
-            optimization_parameters = f"{optimization_parameters}_proximity_input_loss[{args.proximity_input_loss}]"
+            optimization_parameters = f"{optimization_parameters}_prox_x_loss[{args.proximity_input_loss}]"
+
+        if getattr(args, "validity_loss", "cross_entropy") != "cross_entropy":
+            optimization_parameters = f"{optimization_parameters}_valid_loss[{args.validity_loss}]"
+
+        if getattr(args, "validity_margin", 1.0) != 1.0:
+            optimization_parameters = f"{optimization_parameters}_valid_m[{args.validity_margin}]"
+
+        if getattr(args, "categorical_straight_through", False):
+            optimization_parameters = f"{optimization_parameters}_cat_st[{args.categorical_straight_through}]"
+
+        if getattr(args, "posthoc_sparsity", False):
+            optimization_parameters = f"{optimization_parameters}_posthoc_sp[{args.posthoc_sparsity}]"
+
+        if getattr(args, "posthoc_diversity", False):
+            optimization_parameters = f"{optimization_parameters}_posthoc_div[{args.posthoc_diversity}]"
+
+        candidate_CFs = getattr(args, "candidate_CFs", 0)
+        if candidate_CFs and candidate_CFs != getattr(args, "total_CFs", candidate_CFs):
+            optimization_parameters = f"{optimization_parameters}_candCFs[{candidate_CFs}]"
+
+        if getattr(args, "cf_selection_metric", "mixed_distance") != "mixed_distance":
+            optimization_parameters = f"{optimization_parameters}_select[{args.cf_selection_metric}]"
+
+        if getattr(args, "trajectory_quality_selection", False):
+            optimization_parameters = f"{optimization_parameters}_trajq"
+
+        if getattr(args, "enforce_constraints", False):
+            optimization_parameters = f"{optimization_parameters}_constraints"
 
         # 不可变特征配置（这些特征在反事实解释中不应改变）
         if args.immutable:

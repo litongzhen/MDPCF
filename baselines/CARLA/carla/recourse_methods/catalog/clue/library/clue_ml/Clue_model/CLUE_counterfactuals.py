@@ -33,7 +33,6 @@ def vae_gradient_search(
     min_steps=3,
     max_steps=400,
     n_early_stop=3,
-    device="cpu"
 ):
     # Most default hyper parameters are chosen to match those from the paper
     # Data set specific hyper parameters are set as follows:
@@ -67,8 +66,7 @@ def vae_gradient_search(
     x_dim = instance.reshape(instance.shape[0], -1).shape[1]
     # Both weights are set to 1?
     distance_weight = lambda_param / x_dim
-
-    desired_preds = model.predict_proba(torch.tensor(instance).float().to(device))
+    desired_preds = model.predict_proba(instance)
 
     CLUE_explainer = CLUE(
         VAE,
@@ -118,7 +116,7 @@ def vae_gradient_search(
 
     cf_preds = model.predict_proba(counterfactual[:, 0, :])
     indeces_counterfactual = np.where(
-        np.argmax(cf_preds, axis=1) != np.argmax(desired_preds.cpu().detach().numpy(), axis=1)
+        np.argmax(cf_preds, axis=1) != np.argmax(desired_preds, axis=1)
     )[0]
 
     # Return np.nan if none found & otherwise return l_1 cost counterfactual
@@ -193,7 +191,7 @@ class CLUE(BaseNet):
         if self.cuda:
             self.original_x = self.original_x.cuda()
             # self.z_init = self.z_init.cuda()
-            if self.desired_preds is not None and not isinstance(self.desired_preds, torch.Tensor):
+            if self.desired_preds is not None:
                 # self.desired_preds = self.desired_preds.cuda()
                 self.desired_preds = torch.from_numpy(self.desired_preds).cuda()
         else:
@@ -222,7 +220,6 @@ class CLUE(BaseNet):
                     self.z_init = self.z_init.cuda()
                 self.z = nn.Parameter(self.z_init)
                 self.trainable_params.append(self.z)
-
 
         # Optimiser
         self.optimizer = Adam(self.trainable_params, lr=lr)
@@ -368,7 +365,7 @@ class CLUE(BaseNet):
                 preds,
             )
             # We sum over features and over batch size in order to make dz invariant of batch (used to average over batch size)
-            objective.sum(dim=0).backward(retain_graph=True)  # backpropagate
+            objective.sum(dim=0).backward()  # backpropagate
 
             self.optimizer.step()
 

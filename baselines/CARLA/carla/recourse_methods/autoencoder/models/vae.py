@@ -14,7 +14,7 @@ tf.compat.v1.disable_eager_execution()
 
 
 class VariationalAutoencoder(nn.Module):
-    def __init__(self, data_name: str, layers: List, mutable_mask, continuous_feature_indexes=None, categorical_feature_indexes=None, encoding_method="OneHot"):
+    def __init__(self, data_name: str, layers: List, mutable_mask):
         """
 
         Parameters
@@ -33,9 +33,6 @@ class VariationalAutoencoder(nn.Module):
             raise ValueError(
                 "Number of layers have to be at least 2 (input and latent space), and number of neurons bigger than 0"
             )
-        self.continuous_feature_indexes = continuous_feature_indexes
-        self.categorical_feature_indexes = categorical_feature_indexes
-        self.encoding_method = encoding_method
 
         self._data_name = data_name
         self._input_dim = layers[0]
@@ -115,18 +112,10 @@ class VariationalAutoencoder(nn.Module):
         epochs=5,
         lr=1e-3,
         batch_size=32,
-        x_test=None
     ):
         if isinstance(xtrain, pd.DataFrame):
             xtrain = xtrain.values
 
-        if isinstance(x_test, pd.DataFrame):
-            x_test = torch.tensor(x_test.values).float().to(self.device)
-
-
-        print("Train data shape", xtrain.shape)
-
-        self.epochs = epochs
         train_loader = torch.utils.data.DataLoader(
             xtrain, batch_size=batch_size, shuffle=True
         )
@@ -138,9 +127,6 @@ class VariationalAutoencoder(nn.Module):
         )
 
         criterion = nn.BCELoss(reduction="sum")
-        cat_criterion = nn.CrossEntropyLoss()
-        # criterion = nn.MSELoss()
-        # criterion = nn.L1Loss()
 
         # Train the VAE with the new prior
         ELBO = np.zeros((epochs, 1))
@@ -153,139 +139,56 @@ class VariationalAutoencoder(nn.Module):
             train_loss = 0
             train_loss_num = 0
 
-            train_acc = 0
-            total_num = 0
-            
             # Train for all the batches
             for data in train_loader:
-
-                self.train()
-                optimizer.zero_grad()
-
                 data = data.view(data.shape[0], -1)
                 data = data.to(self.device).float()
 
                 # forward pass
                 reconstruction, mu, log_var = self(data)
 
-                reconstruction_num = reconstruction[:, self.continuous_feature_indexes]
-                data_num = data[:, self.continuous_feature_indexes]
-
-                
-                
-                num_mse = (reconstruction_num - data_num).pow(2).mean()
-                # cat_loss = 0
-
-                if self.categorical_feature_indexes is not None:
-                    for idxs in self.categorical_feature_indexes:
-
-                        # if len(idxs) == 1 and self.encoding_method=="OneHot_drop_binary":
-                        #     data_hat = data[:, idxs[0]]
-                        #     reconstruction_hat = reconstruction[:, idxs[0]]
-                        # else:
-                        data_hat = torch.argmax(data[:, idxs], axis=1)
-                        reconstruction_hat = torch.argmax(reconstruction[:, idxs], axis=1)
-
-                        # cat_loss += cat_criterion(reconstruction[:, idxs], data_hat)
-                        train_acc += (data_hat == reconstruction_hat).float().sum()
-                        total_num += data_hat.shape[0]
-
-
                 recon_loss = criterion(reconstruction, data)
-                # recon_loss = num_loss + cat_loss
-
                 kld_loss = self.kld(mu, log_var)
-
                 loss = recon_loss + beta * kld_loss
 
-
+                # Update the parameters
+                optimizer.zero_grad()
                 # Compute the loss
                 loss.backward()
                 # Update the parameters
                 optimizer.step()
 
-
-
                 # Collect the ways
                 train_loss += loss.item()
                 train_loss_num += 1
 
-            train_acc /= total_num
+            ELBO[epoch] = train_loss / train_loss_num
+            if epoch % 10 == 0:
+                log.info(
+                    "[Epoch: {}/{}] [objective: {:.3f}]".format(
+                        epoch, epochs, ELBO[epoch, 0]
+                    )
+                )
 
-            '''
-                Evaluation
-            '''
-
-            if x_test is not None:
-                self.eval()
-
-                with torch.no_grad():
-                    reconstruction_val, _, _ = self(x_test)
-
-                    recon_loss_val = criterion(reconstruction_val, x_test)
-                    
-                    reconstruction_num_val = reconstruction_val[:, self.continuous_feature_indexes]
-                    data_num_val = x_test[:, self.continuous_feature_indexes]
-
-                    num_mse_val = (reconstruction_num_val - data_num_val).pow(2).mean()
-
-                    val_acc = 0
-                    total_num_val = 0
-                    for idxs in self.categorical_feature_indexes:
-                        data_hat_val = torch.argmax(x_test[:, idxs], axis=1)
-                        reconstruction_hat_val = torch.argmax(reconstruction_val[:, idxs], axis=1)
-
-                        # cat_loss += cat_criterion(reconstruction[:, idxs], data_hat)
-                        val_acc += (data_hat_val == reconstruction_hat_val).float().sum()
-                        total_num_val += data_hat_val.shape[0]
-                    
-                    val_acc /= total_num_val
-
-            elbo_train = train_loss / train_loss_num
-            
-            if x_test is not None:
-                print('epoch: {}, beta = {:.6f}, Train ELBO {:.6f}, Train MSE: {:.6f}, Train KL:{:.6f}, Val MSE:{:.6f}, Train ACC:{:6f}, Val ACC:{:6f}'.format(epoch, beta, elbo_train, num_mse, kld_loss, num_mse_val.item(), train_acc.item(), val_acc.item() ))
-            else:
-                print('epoch: {}, beta = {:.6f}, Train ELBO {:.6f}, Train MSE: {:.6f}, Train KL:{:.6f}, Train ACC:{:6f}'.format(epoch, beta, elbo_train, num_mse, kld_loss, train_acc.item()))
-
-            # ELBO[epoch] = train_loss / train_loss_num
-            # if epoch % 10 == 0:
-            #     log.info(
-            #         "[Epoch: {}/{}] [objective: {:.3f}]".format(
-            #             epoch, epochs, ELBO[epoch, 0]
-            #         )
-            #     )
-
-            # ELBO_train = ELBO[epoch, 0].round(2)
-            # log.info("[ELBO train: " + str(ELBO_train) + "]")
+            ELBO_train = ELBO[epoch, 0].round(2)
+            log.info("[ELBO train: " + str(ELBO_train) + "]")
 
         self.save()
         log.info("... finished training of Variational Autoencoder.")
 
         self.eval()
 
-    def trained_exists(self, input_shape, epochs):
+    def load(self, input_shape):
         cache_path = get_home()
 
         load_path = os.path.join(
             cache_path,
-            "{}_{}_epochs_{}.{}".format(self._data_name, input_shape, epochs, "pt"),
-        )
-        return os.path.isfile(load_path)
-
-
-    def load(self, input_shape, epochs):
-        cache_path = get_home()
-
-        load_path = os.path.join(
-            cache_path,
-            "{}_{}_epochs_{}.{}".format(self._data_name, input_shape, epochs, "pt"),
+            "{}_{}.{}".format(self._data_name, input_shape, "pt"),
         )
 
         self.load_state_dict(torch.load(load_path))
 
         self.eval()
-        print("Loaded VAE from", load_path)
 
         return self
 
@@ -294,7 +197,7 @@ class VariationalAutoencoder(nn.Module):
 
         save_path = os.path.join(
             cache_path,
-            "{}_{}_epochs_{}.{}".format(self._data_name, self._input_dim, self.epochs, "pt"),
+            "{}_{}.{}".format(self._data_name, self._input_dim, "pt"),
         )
 
         torch.save(self.state_dict(), save_path)
