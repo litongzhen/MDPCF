@@ -11,12 +11,16 @@ from tqdm import tqdm
 
 from mdpcf.csvae.model import BBMLPCLF
 from mdpcf.latent_utils import get_input_generate
+from mdpcf.black_box_preprocessing import (
+    BlackBoxPreprocessor, assert_encoded_input_alignment,
+    guard_preprocessing_output, save_source_manifest,
+)
 from mdpcf.sample import (
     apply_integer_constraints,
     apply_numerical_domain_constraints,
     apply_raw_actionability_constraints,
-    encode_raw_features_for_black_box,
     recover_data_from_encoded,
+    select_source_indices,
 )
 from utils_train import get_black_box_model_path, preprocess, save_run_config
 
@@ -152,6 +156,7 @@ def main(args):
     data_dir = f"data/{dataname}"
     save_path = build_output_dir(args)
     os.makedirs(save_path, exist_ok=True)
+    guard_preprocessing_output(args, save_path)
     save_run_config(args, save_path)
 
     generation_inputs = get_input_generate(args)
@@ -172,6 +177,9 @@ def main(args):
     X_train_encoded, X_test_encoded = [
         np.asarray(x, dtype=np.float32) for x in X_num_cat_ohe
     ]
+    raw_preprocessor = BlackBoxPreprocessor(data_dir)
+    test_df = pd.read_csv(f"data/{dataname}/test.csv")
+    assert_encoded_input_alignment(raw_preprocessor.transform(test_df), X_test_encoded)
 
     black_box, model_filename = load_black_box(args, data_dir, X_train_encoded.shape[1])
     classifier = MDPCFBlackBoxAdapter(black_box, args.device)
@@ -191,9 +199,10 @@ def main(args):
     print(f"DiCoFlex flow training rows: {len(X_train_flow)} / {len(X_train_encoded)}")
 
     target_class_index = int(args.target_class)
-    indices_negative_class = np.where(test_preds != target_class_index)[0]
-    if args.num_samples > 0:
-        indices_negative_class = indices_negative_class[: args.num_samples]
+    indices_negative_class = select_source_indices(
+        test_preds, target_class_index, args.num_samples, getattr(args, "source_start", 0)
+    )
+    save_source_manifest(save_path, indices_negative_class, test_probs, target_class_index)
 
     if len(np.unique(y_train_flow)) < 2:
         raise ValueError("DiCoFlex needs at least two predicted classes in the training set.")
@@ -279,7 +288,7 @@ def main(args):
         cfs = apply_numerical_domain_constraints(cfs, info)
         cfs = apply_integer_constraints(cfs, info)
 
-        final_encoded = encode_raw_features_for_black_box(cfs, info)
+        final_encoded = raw_preprocessor.transform(cfs)
         target_probs = classifier.predict_proba(final_encoded)[:, target_class_index]
         cfs["id"] = source_id
         cfs["target_prob"] = target_probs

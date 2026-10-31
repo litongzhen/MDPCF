@@ -1,0 +1,849 @@
+{
+  "input_table_hashes": {
+    "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv": "442c55090d1cebe9aaf3e108c8be2a86ad3c2b19b8a8394eee131ee73e91303e",
+    "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\all_methods_final.csv": "4ea1757960d84968eb6d58aba6b5c46c91c1c948c67e080541ea62d6f9ef6b32",
+    "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\per_seed.csv": "15550753377b691e04c4ac84e3fdcdb99483498cfdb524f613bfd8a6d3941378"
+  },
+  "runs": [
+    {
+      "dataset": "adult",
+      "method": "cchvae",
+      "seed": 42,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[42]\\adult\\CCHVAE\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "adult",
+      "method": "dice",
+      "seed": 42,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[42]\\adult\\DiCE\\random\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "adult",
+      "method": "dicoflex",
+      "seed": 42,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\runs\\seed[42]\\adult\\DiCoFlex\\epochs[10]_p[2.0]_temp[0.8]_nn[32]_train[2000]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\all_methods_final.csv"
+    },
+    {
+      "dataset": "adult",
+      "method": "revise",
+      "seed": 42,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[42]\\adult\\Revise\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "adult",
+      "method": "wachter",
+      "seed": 42,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[42]\\adult\\Wachter\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "bank",
+      "method": "cchvae",
+      "seed": 42,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[42]\\bank\\CCHVAE\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "bank",
+      "method": "dice",
+      "seed": 42,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[42]\\bank\\DiCE\\random\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "bank",
+      "method": "dicoflex",
+      "seed": 42,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\runs\\seed[42]\\bank\\DiCoFlex\\epochs[10]_p[2.0]_temp[0.8]_nn[32]_train[2000]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\all_methods_final.csv"
+    },
+    {
+      "dataset": "bank",
+      "method": "revise",
+      "seed": 42,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[42]\\bank\\Revise\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "bank",
+      "method": "wachter",
+      "seed": 42,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[42]\\bank\\Wachter\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "default",
+      "method": "cchvae",
+      "seed": 42,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[42]\\default\\CCHVAE\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "default",
+      "method": "dice",
+      "seed": 42,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[42]\\default\\DiCE\\random\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "default",
+      "method": "dicoflex",
+      "seed": 42,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\runs\\seed[42]\\default\\DiCoFlex\\epochs[10]_p[2.0]_temp[0.8]_nn[32]_train[2000]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\all_methods_final.csv"
+    },
+    {
+      "dataset": "default",
+      "method": "revise",
+      "seed": 42,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[42]\\default\\Revise\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "default",
+      "method": "wachter",
+      "seed": 42,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[42]\\default\\Wachter\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "gmc",
+      "method": "cchvae",
+      "seed": 42,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[42]\\gmc\\CCHVAE\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "gmc",
+      "method": "dice",
+      "seed": 42,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[42]\\gmc\\DiCE\\random\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "gmc",
+      "method": "dicoflex",
+      "seed": 42,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\runs\\seed[42]\\gmc\\DiCoFlex\\epochs[10]_p[2.0]_temp[0.8]_nn[32]_train[2000]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\all_methods_final.csv"
+    },
+    {
+      "dataset": "gmc",
+      "method": "revise",
+      "seed": 42,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[42]\\gmc\\Revise\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "gmc",
+      "method": "wachter",
+      "seed": 42,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[42]\\gmc\\Wachter\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "lending-club",
+      "method": "cchvae",
+      "seed": 42,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[42]\\lending-club\\CCHVAE\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "lending-club",
+      "method": "dice",
+      "seed": 42,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[42]\\lending-club\\DiCE\\random\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "lending-club",
+      "method": "dicoflex",
+      "seed": 42,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\runs\\seed[42]\\lending-club\\DiCoFlex\\epochs[10]_p[2.0]_temp[0.8]_nn[32]_train[2000]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\all_methods_final.csv"
+    },
+    {
+      "dataset": "lending-club",
+      "method": "revise",
+      "seed": 42,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[42]\\lending-club\\Revise\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "lending-club",
+      "method": "wachter",
+      "seed": 42,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[42]\\lending-club\\Wachter\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "adult",
+      "method": "cchvae",
+      "seed": 43,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[43]\\adult\\CCHVAE\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "adult",
+      "method": "dice",
+      "seed": 43,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[43]\\adult\\DiCE\\random\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "adult",
+      "method": "dicoflex",
+      "seed": 43,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\runs\\seed[43]\\adult\\DiCoFlex\\epochs[10]_p[2.0]_temp[0.8]_nn[32]_train[2000]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\all_methods_final.csv"
+    },
+    {
+      "dataset": "adult",
+      "method": "revise",
+      "seed": 43,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[43]\\adult\\Revise\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "adult",
+      "method": "wachter",
+      "seed": 43,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[43]\\adult\\Wachter\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "bank",
+      "method": "cchvae",
+      "seed": 43,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[43]\\bank\\CCHVAE\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "bank",
+      "method": "dice",
+      "seed": 43,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[43]\\bank\\DiCE\\random\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "bank",
+      "method": "dicoflex",
+      "seed": 43,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\runs\\seed[43]\\bank\\DiCoFlex\\epochs[10]_p[2.0]_temp[0.8]_nn[32]_train[2000]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\all_methods_final.csv"
+    },
+    {
+      "dataset": "bank",
+      "method": "revise",
+      "seed": 43,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[43]\\bank\\Revise\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "bank",
+      "method": "wachter",
+      "seed": 43,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[43]\\bank\\Wachter\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "default",
+      "method": "cchvae",
+      "seed": 43,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[43]\\default\\CCHVAE\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "default",
+      "method": "dice",
+      "seed": 43,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[43]\\default\\DiCE\\random\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "default",
+      "method": "dicoflex",
+      "seed": 43,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\runs\\seed[43]\\default\\DiCoFlex\\epochs[10]_p[2.0]_temp[0.8]_nn[32]_train[2000]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\all_methods_final.csv"
+    },
+    {
+      "dataset": "default",
+      "method": "revise",
+      "seed": 43,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[43]\\default\\Revise\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "default",
+      "method": "wachter",
+      "seed": 43,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[43]\\default\\Wachter\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "gmc",
+      "method": "cchvae",
+      "seed": 43,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[43]\\gmc\\CCHVAE\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "gmc",
+      "method": "dice",
+      "seed": 43,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[43]\\gmc\\DiCE\\random\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "gmc",
+      "method": "dicoflex",
+      "seed": 43,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\runs\\seed[43]\\gmc\\DiCoFlex\\epochs[10]_p[2.0]_temp[0.8]_nn[32]_train[2000]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\all_methods_final.csv"
+    },
+    {
+      "dataset": "gmc",
+      "method": "revise",
+      "seed": 43,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[43]\\gmc\\Revise\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "gmc",
+      "method": "wachter",
+      "seed": 43,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[43]\\gmc\\Wachter\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "lending-club",
+      "method": "cchvae",
+      "seed": 43,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[43]\\lending-club\\CCHVAE\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "lending-club",
+      "method": "dice",
+      "seed": 43,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[43]\\lending-club\\DiCE\\random\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "lending-club",
+      "method": "dicoflex",
+      "seed": 43,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\runs\\seed[43]\\lending-club\\DiCoFlex\\epochs[10]_p[2.0]_temp[0.8]_nn[32]_train[2000]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\all_methods_final.csv"
+    },
+    {
+      "dataset": "lending-club",
+      "method": "revise",
+      "seed": 43,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[43]\\lending-club\\Revise\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "lending-club",
+      "method": "wachter",
+      "seed": 43,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[43]\\lending-club\\Wachter\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "adult",
+      "method": "cchvae",
+      "seed": 44,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[44]\\adult\\CCHVAE\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "adult",
+      "method": "dice",
+      "seed": 44,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[44]\\adult\\DiCE\\random\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "adult",
+      "method": "dicoflex",
+      "seed": 44,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\runs\\seed[44]\\adult\\DiCoFlex\\epochs[10]_p[2.0]_temp[0.8]_nn[32]_train[2000]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\all_methods_final.csv"
+    },
+    {
+      "dataset": "adult",
+      "method": "revise",
+      "seed": 44,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[44]\\adult\\Revise\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "adult",
+      "method": "wachter",
+      "seed": 44,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[44]\\adult\\Wachter\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "bank",
+      "method": "cchvae",
+      "seed": 44,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[44]\\bank\\CCHVAE\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "bank",
+      "method": "dice",
+      "seed": 44,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[44]\\bank\\DiCE\\random\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "bank",
+      "method": "dicoflex",
+      "seed": 44,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\runs\\seed[44]\\bank\\DiCoFlex\\epochs[10]_p[2.0]_temp[0.8]_nn[32]_train[2000]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\all_methods_final.csv"
+    },
+    {
+      "dataset": "bank",
+      "method": "revise",
+      "seed": 44,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[44]\\bank\\Revise\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "bank",
+      "method": "wachter",
+      "seed": 44,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[44]\\bank\\Wachter\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "default",
+      "method": "cchvae",
+      "seed": 44,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[44]\\default\\CCHVAE\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "default",
+      "method": "dice",
+      "seed": 44,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[44]\\default\\DiCE\\random\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "default",
+      "method": "dicoflex",
+      "seed": 44,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\runs\\seed[44]\\default\\DiCoFlex\\epochs[10]_p[2.0]_temp[0.8]_nn[32]_train[2000]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\all_methods_final.csv"
+    },
+    {
+      "dataset": "default",
+      "method": "revise",
+      "seed": 44,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[44]\\default\\Revise\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "default",
+      "method": "wachter",
+      "seed": 44,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[44]\\default\\Wachter\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "gmc",
+      "method": "cchvae",
+      "seed": 44,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[44]\\gmc\\CCHVAE\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "gmc",
+      "method": "dice",
+      "seed": 44,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[44]\\gmc\\DiCE\\random\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "gmc",
+      "method": "dicoflex",
+      "seed": 44,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\runs\\seed[44]\\gmc\\DiCoFlex\\epochs[10]_p[2.0]_temp[0.8]_nn[32]_train[2000]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\all_methods_final.csv"
+    },
+    {
+      "dataset": "gmc",
+      "method": "revise",
+      "seed": 44,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[44]\\gmc\\Revise\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "gmc",
+      "method": "wachter",
+      "seed": 44,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[44]\\gmc\\Wachter\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "lending-club",
+      "method": "cchvae",
+      "seed": 44,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[44]\\lending-club\\CCHVAE\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "lending-club",
+      "method": "dice",
+      "seed": 44,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[44]\\lending-club\\DiCE\\random\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "lending-club",
+      "method": "dicoflex",
+      "seed": 44,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\runs\\seed[44]\\lending-club\\DiCoFlex\\epochs[10]_p[2.0]_temp[0.8]_nn[32]_train[2000]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_train_fitted_v1\\all_methods_final.csv"
+    },
+    {
+      "dataset": "lending-club",
+      "method": "revise",
+      "seed": 44,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[44]\\lending-club\\Revise\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "lending-club",
+      "method": "wachter",
+      "seed": 44,
+      "result_directory": "results\\final_baselines_multiseed_3000\\runs\\seed[44]\\lending-club\\Wachter\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_baselines_multiseed_3000\\all_methods.csv"
+    },
+    {
+      "dataset": "adult",
+      "method": "csvae_mlp",
+      "seed": 42,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\adult\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_bb[mlp]_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[42]\\gradient\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\adult\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_bb[mlp]_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[42]\\gradient\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "adult",
+      "method": "csvae_mlp",
+      "seed": 43,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\adult\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_bb[mlp]_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[43]\\gradient\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\adult\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_bb[mlp]_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[43]\\gradient\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "adult",
+      "method": "csvae_mlp",
+      "seed": 44,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\adult\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_bb[mlp]_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[44]\\gradient\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\adult\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_bb[mlp]_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[44]\\gradient\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "adult",
+      "method": "csvae_transformer",
+      "seed": 42,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\adult\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[42]\\gradient\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\adult\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[42]\\gradient\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "adult",
+      "method": "csvae_transformer",
+      "seed": 43,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\adult\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[43]\\gradient\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\adult\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[43]\\gradient\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "adult",
+      "method": "csvae_transformer",
+      "seed": 44,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\adult\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[44]\\gradient\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\adult\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[44]\\gradient\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "adult",
+      "method": "standard_vae",
+      "seed": 42,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\adult\\MDPCF\\num[minmax]_loss[L2]_standard_vae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[42]\\gradient\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\adult\\MDPCF\\num[minmax]_loss[L2]_standard_vae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[42]\\gradient\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "adult",
+      "method": "standard_vae",
+      "seed": 43,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\adult\\MDPCF\\num[minmax]_loss[L2]_standard_vae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[43]\\gradient\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\adult\\MDPCF\\num[minmax]_loss[L2]_standard_vae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[43]\\gradient\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "adult",
+      "method": "standard_vae",
+      "seed": 44,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\adult\\MDPCF\\num[minmax]_loss[L2]_standard_vae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[44]\\gradient\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\adult\\MDPCF\\num[minmax]_loss[L2]_standard_vae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[44]\\gradient\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "bank",
+      "method": "csvae_mlp",
+      "seed": 42,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\bank\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_bb[mlp]_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[42]\\gradient\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\bank\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_bb[mlp]_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[42]\\gradient\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "bank",
+      "method": "csvae_mlp",
+      "seed": 43,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\bank\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_bb[mlp]_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[43]\\gradient\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\bank\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_bb[mlp]_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[43]\\gradient\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "bank",
+      "method": "csvae_mlp",
+      "seed": 44,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\bank\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_bb[mlp]_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[44]\\gradient\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\bank\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_bb[mlp]_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[44]\\gradient\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "bank",
+      "method": "csvae_transformer",
+      "seed": 42,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\bank\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[42]\\gradient\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\bank\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[42]\\gradient\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "bank",
+      "method": "csvae_transformer",
+      "seed": 43,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\bank\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[43]\\gradient\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\bank\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[43]\\gradient\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "bank",
+      "method": "csvae_transformer",
+      "seed": 44,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\bank\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[44]\\gradient\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\bank\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[44]\\gradient\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "bank",
+      "method": "standard_vae",
+      "seed": 42,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\bank\\MDPCF\\num[minmax]_loss[L2]_standard_vae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[42]\\gradient\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\bank\\MDPCF\\num[minmax]_loss[L2]_standard_vae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[42]\\gradient\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "bank",
+      "method": "standard_vae",
+      "seed": 43,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\bank\\MDPCF\\num[minmax]_loss[L2]_standard_vae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[43]\\gradient\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\bank\\MDPCF\\num[minmax]_loss[L2]_standard_vae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[43]\\gradient\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "bank",
+      "method": "standard_vae",
+      "seed": 44,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\bank\\MDPCF\\num[minmax]_loss[L2]_standard_vae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[44]\\gradient\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\bank\\MDPCF\\num[minmax]_loss[L2]_standard_vae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[44]\\gradient\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "default",
+      "method": "csvae_mlp",
+      "seed": 42,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\default\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_bb[mlp]_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[42]\\gradient\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\default\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_bb[mlp]_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[42]\\gradient\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "default",
+      "method": "csvae_mlp",
+      "seed": 43,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\default\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_bb[mlp]_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[43]\\gradient\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\default\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_bb[mlp]_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[43]\\gradient\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "default",
+      "method": "csvae_mlp",
+      "seed": 44,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\default\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_bb[mlp]_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[44]\\gradient\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\default\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_bb[mlp]_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[44]\\gradient\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "default",
+      "method": "csvae_transformer",
+      "seed": 42,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\default\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[42]\\gradient\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\default\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[42]\\gradient\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "default",
+      "method": "csvae_transformer",
+      "seed": 43,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\default\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[43]\\gradient\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\default\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[43]\\gradient\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "default",
+      "method": "csvae_transformer",
+      "seed": 44,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\default\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[44]\\gradient\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\default\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[44]\\gradient\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "default",
+      "method": "standard_vae",
+      "seed": 42,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\default\\MDPCF\\num[minmax]_loss[L2]_standard_vae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[42]\\gradient\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\default\\MDPCF\\num[minmax]_loss[L2]_standard_vae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[42]\\gradient\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "default",
+      "method": "standard_vae",
+      "seed": 43,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\default\\MDPCF\\num[minmax]_loss[L2]_standard_vae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[43]\\gradient\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\default\\MDPCF\\num[minmax]_loss[L2]_standard_vae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[43]\\gradient\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "default",
+      "method": "standard_vae",
+      "seed": 44,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\default\\MDPCF\\num[minmax]_loss[L2]_standard_vae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[44]\\gradient\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\default\\MDPCF\\num[minmax]_loss[L2]_standard_vae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[44]\\gradient\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "gmc",
+      "method": "csvae_mlp",
+      "seed": 42,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\gmc\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_bb[mlp]_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[42]\\gradient\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\gmc\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_bb[mlp]_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[42]\\gradient\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "gmc",
+      "method": "csvae_mlp",
+      "seed": 43,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\gmc\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_bb[mlp]_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[43]\\gradient\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\gmc\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_bb[mlp]_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[43]\\gradient\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "gmc",
+      "method": "csvae_mlp",
+      "seed": 44,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\gmc\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_bb[mlp]_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[44]\\gradient\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\gmc\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_bb[mlp]_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[44]\\gradient\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "gmc",
+      "method": "csvae_transformer",
+      "seed": 42,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\gmc\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[42]\\gradient\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\gmc\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[42]\\gradient\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "gmc",
+      "method": "csvae_transformer",
+      "seed": 43,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\gmc\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[43]\\gradient\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\gmc\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[43]\\gradient\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "gmc",
+      "method": "csvae_transformer",
+      "seed": 44,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\gmc\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[44]\\gradient\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\gmc\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[44]\\gradient\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "gmc",
+      "method": "standard_vae",
+      "seed": 42,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\gmc\\MDPCF\\num[minmax]_loss[L2]_standard_vae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[42]\\gradient\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\gmc\\MDPCF\\num[minmax]_loss[L2]_standard_vae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[42]\\gradient\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "gmc",
+      "method": "standard_vae",
+      "seed": 43,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\gmc\\MDPCF\\num[minmax]_loss[L2]_standard_vae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[43]\\gradient\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\gmc\\MDPCF\\num[minmax]_loss[L2]_standard_vae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[43]\\gradient\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "gmc",
+      "method": "standard_vae",
+      "seed": 44,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\gmc\\MDPCF\\num[minmax]_loss[L2]_standard_vae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[44]\\gradient\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\gmc\\MDPCF\\num[minmax]_loss[L2]_standard_vae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[44]\\gradient\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "lending-club",
+      "method": "csvae_mlp",
+      "seed": 42,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\lending-club\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_bb[mlp]_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[42]\\gradient\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\lending-club\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_bb[mlp]_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[42]\\gradient\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "lending-club",
+      "method": "csvae_mlp",
+      "seed": 43,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\lending-club\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_bb[mlp]_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[43]\\gradient\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\lending-club\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_bb[mlp]_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[43]\\gradient\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "lending-club",
+      "method": "csvae_mlp",
+      "seed": 44,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\lending-club\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_bb[mlp]_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[44]\\gradient\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\lending-club\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_bb[mlp]_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[44]\\gradient\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "lending-club",
+      "method": "csvae_transformer",
+      "seed": 42,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\lending-club\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[42]\\gradient\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\lending-club\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[42]\\gradient\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "lending-club",
+      "method": "csvae_transformer",
+      "seed": 43,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\lending-club\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[43]\\gradient\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\lending-club\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[43]\\gradient\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "lending-club",
+      "method": "csvae_transformer",
+      "seed": 44,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\lending-club\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[44]\\gradient\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\lending-club\\MDPCF\\num[minmax]_loss[L2]_csvae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[44]\\gradient\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "lending-club",
+      "method": "standard_vae",
+      "seed": 42,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\lending-club\\MDPCF\\num[minmax]_loss[L2]_standard_vae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[42]\\gradient\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\lending-club\\MDPCF\\num[minmax]_loss[L2]_standard_vae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[42]\\gradient\\run[final_main_ablation_e2000]_seed[42]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "lending-club",
+      "method": "standard_vae",
+      "seed": 43,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\lending-club\\MDPCF\\num[minmax]_loss[L2]_standard_vae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[43]\\gradient\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\lending-club\\MDPCF\\num[minmax]_loss[L2]_standard_vae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[43]\\gradient\\run[final_main_ablation_e2000]_seed[43]\\100_samples_CFs_10\\evaluation_summary.csv"
+    },
+    {
+      "dataset": "lending-club",
+      "method": "standard_vae",
+      "seed": 44,
+      "result_directory": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\lending-club\\MDPCF\\num[minmax]_loss[L2]_standard_vae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[44]\\gradient\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10",
+      "source_table": "D:\\CS Learning\\因果推断\\反事实解释\\MDPCF\\results\\final_main_ablation_3000\\runs\\lending-club\\MDPCF\\num[minmax]_loss[L2]_standard_vae_tokdec_gs[t1.0]_cont[sigmoid]_run[final_main_ablation_e2000]_seed[44]\\gradient\\run[final_main_ablation_e2000]_seed[44]\\100_samples_CFs_10\\evaluation_summary.csv"
+    }
+  ]
+}

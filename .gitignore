@@ -101,6 +101,7 @@ baselines/**/*.pkl
 
 # Code-only first release: keep draft manuscript and unlicensed external trees local
 /Mathematics/
+/template.tex
 /baselines/DiCoFlex-main/
 /baselines/TABCF-main/
 /baselines/tabcf_original/
